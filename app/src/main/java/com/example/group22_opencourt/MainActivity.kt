@@ -23,9 +23,9 @@ class MainActivity : AppCompatActivity() {
 
         val fragments = ArrayList<Fragment>()
         fragments.add(SimpleTextFragment.newInstance("Home"))
-        fragments.add( SimpleTextFragment.newInstance("Search"))
-        fragments.add( SimpleTextFragment.newInstance("Create"))
-        fragments.add( SimpleTextFragment.newInstance("Profile"))
+        fragments.add( SimpleTextFragment.newInstance("Map"))
+        fragments.add( SimpleTextFragment.newInstance("Add Court"))
+        fragments.add( SimpleTextFragment.newInstance("Settings"))
 
 
 
@@ -51,11 +51,12 @@ class MainActivity : AppCompatActivity() {
         binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 super.onPageSelected(position)
-                val itemId = when (position) {
-                    0 -> R.id.nav_home
-                    1 -> R.id.nav_map
-                    2 -> R.id.nav_add_court
-                    3 -> R.id.nav_settings
+                var itemId = 0
+                when (position) {
+                    0 -> {itemId = R.id.nav_home; binding.toolbar.title = "Home"}
+                    1 -> {itemId = R.id.nav_map; binding.toolbar.title = "Map"}
+                    2 -> {itemId = R.id.nav_add_court; binding.toolbar.title = "Add Court"}
+                    3 -> {itemId = R.id.nav_settings; binding.toolbar.title = "Settings"}
                     else -> R.id.nav_home
                 }
                 binding.bottomNav.selectedItemId = itemId
