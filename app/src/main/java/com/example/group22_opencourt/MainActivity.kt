@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.widget.ViewPager2
 import com.example.group22_opencourt.databinding.ActivityMainBinding
+import com.example.group22_opencourt.ui.main.HomeFragment
 import com.example.group22_opencourt.ui.main.MainPagerAdapter
 import com.example.group22_opencourt.ui.main.SimpleTextFragment
 
@@ -22,7 +23,7 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
 
         val fragments = ArrayList<Fragment>()
-        fragments.add(SimpleTextFragment.newInstance("Home"))
+        fragments.add(HomeFragment())
         fragments.add( SimpleTextFragment.newInstance("Map"))
         fragments.add( SimpleTextFragment.newInstance("Add Court"))
         fragments.add( SimpleTextFragment.newInstance("Settings"))
