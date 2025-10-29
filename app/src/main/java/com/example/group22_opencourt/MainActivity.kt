@@ -1,21 +1,17 @@
 package com.example.group22_opencourt
 
+
 import android.os.Bundle
-import android.view.Menu
-import com.google.android.material.snackbar.Snackbar
-import com.google.android.material.navigation.NavigationView
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
-import androidx.navigation.ui.setupActionBarWithNavController
-import androidx.navigation.ui.setupWithNavController
-import androidx.drawerlayout.widget.DrawerLayout
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import androidx.viewpager2.widget.ViewPager2
 import com.example.group22_opencourt.databinding.ActivityMainBinding
+import com.example.group22_opencourt.ui.main.MainPagerAdapter
+import com.example.group22_opencourt.ui.main.SimpleTextFragment
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,36 +19,47 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        enableEdgeToEdge()
 
-        setSupportActionBar(binding.appBarMain.toolbar)
+        val fragments = ArrayList<Fragment>()
+        fragments.add(SimpleTextFragment.newInstance("Home"))
+        fragments.add( SimpleTextFragment.newInstance("Search"))
+        fragments.add( SimpleTextFragment.newInstance("Create"))
+        fragments.add( SimpleTextFragment.newInstance("Profile"))
 
-        binding.appBarMain.fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null)
-                .setAnchorView(R.id.fab).show()
+
+
+        val pagerAdapter = MainPagerAdapter(this, fragments)
+        binding.viewPager.adapter = pagerAdapter
+        binding.viewPager.isUserInputEnabled = true
+
+
+
+        // Bottom nav buttons to switch to correct fragment
+        binding.bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> binding.viewPager.setCurrentItem(0, true)
+                R.id.nav_map -> binding.viewPager.setCurrentItem(1, true)
+                R.id.nav_add_court -> binding.viewPager.setCurrentItem(2, true)
+                R.id.nav_settings -> binding.viewPager.setCurrentItem(3, true)
+            }
+            true //handled change
         }
-        val drawerLayout: DrawerLayout = binding.drawerLayout
-        val navView: NavigationView = binding.navView
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-        appBarConfiguration = AppBarConfiguration(
-            setOf(
-                R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow
-            ), drawerLayout
-        )
-        setupActionBarWithNavController(navController, appBarConfiguration)
-        navView.setupWithNavController(navController)
-    }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.main, menu)
-        return true
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
+        // sync bottom nav button selected to current fragment
+        //method requires an object instance
+        binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                super.onPageSelected(position)
+                val itemId = when (position) {
+                    0 -> R.id.nav_home
+                    1 -> R.id.nav_map
+                    2 -> R.id.nav_add_court
+                    3 -> R.id.nav_settings
+                    else -> R.id.nav_home
+                }
+                binding.bottomNav.selectedItemId = itemId
+            }
+        })
     }
 }
