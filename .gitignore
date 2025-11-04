@@ -20,3 +20,4 @@ local.properties
 # Kotlin build cache
 .kotlin/
 
+.idea/deviceManager.xml
