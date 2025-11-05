@@ -52,7 +52,6 @@ class MapFragment : Fragment(), OnMapReadyCallback,
             }
             mapFragment!!.getMapAsync(this)
         }
-        setupMapTypeSpinner()
     }
 
     private fun setupMapTypeSpinner() {
@@ -65,7 +64,7 @@ class MapFragment : Fragment(), OnMapReadyCallback,
         binding.mapTypeSpinner.setSelection(0)
         // change map type for spinner selection
         binding.mapTypeSpinner.setOnItemSelectedListener(object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
                 when (position) {
                     0 -> map.mapType = GoogleMap.MAP_TYPE_NORMAL
                     1 -> map.mapType = GoogleMap.MAP_TYPE_SATELLITE
@@ -95,6 +94,7 @@ class MapFragment : Fragment(), OnMapReadyCallback,
                 updateUserLocation(location)
             }
         }
+        setupMapTypeSpinner()
     }
 
     override fun onMapLongClick(latLng: LatLng) {
