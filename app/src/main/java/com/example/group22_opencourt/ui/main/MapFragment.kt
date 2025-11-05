@@ -6,18 +6,19 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.lifecycleScope
 import com.example.group22_opencourt.MainActivity
 import com.example.group22_opencourt.R
-
 import com.example.group22_opencourt.databinding.FragmentMapBinding
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.GoogleMapOptions
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import kotlin.text.replace
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 class MapFragment : Fragment(), OnMapReadyCallback {
@@ -25,7 +26,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private lateinit var binding: FragmentMapBinding
     private lateinit var map: GoogleMap
     private var mapCentered = false
-
+    private var mapFragment: SupportMapFragment? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -36,33 +37,41 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        var mapFragment = childFragmentManager.findFragmentById(R.id.map_container) as? SupportMapFragment
         if (mapFragment == null) {
-            mapFragment = SupportMapFragment.newInstance()
-            childFragmentManager.beginTransaction()
-                .replace(R.id.map_container, mapFragment)
-                .commit()
+            mapFragment = childFragmentManager.findFragmentById(R.id.map_container) as? SupportMapFragment
+            if (mapFragment == null) {
+                mapFragment = SupportMapFragment.newInstance()
+                childFragmentManager.beginTransaction()
+                    .replace(R.id.map_container, mapFragment!!)
+                    .commitNow()
+            }
+            mapFragment!!.getMapAsync(this)
         }
-        mapFragment.getMapAsync(this)
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
+        // setup the map
         map = googleMap
-        val options = GoogleMapOptions()
-        options.mapType(GoogleMap.MAP_TYPE_NORMAL)
+        map.mapType = GoogleMap.MAP_TYPE_NORMAL
         map.uiSettings.isZoomControlsEnabled = true
         map.uiSettings.isCompassEnabled = true
-        // get user location from MainActivity and update map
-        val location = (activity as? MainActivity)?.currentLocation
-        if (location != null) {
-            updateUserLocation(location)
-        } else {
-            // use sfu as default location
-            val sfuLatLng = Location("").apply {
-                latitude = 49.27984399307886
-                longitude = -122.92159771848385
+
+        // update user location asynchronously
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            val location = getUserLocation()
+            withContext(Dispatchers.Main) {
+                updateUserLocation(location)
             }
-            updateUserLocation(sfuLatLng)
+        }
+    }
+
+    private fun getUserLocation(): Location {
+        // get user location from MainActivity
+        val activity = activity as? MainActivity
+        // if location is null, return a default location (sfu)
+        return activity?.currentLocation ?: Location("").apply {
+            latitude = 49.27984399307886
+            longitude = -122.92159771848385
         }
     }
 
