@@ -1,5 +1,6 @@
 package com.example.group22_opencourt.ui.main
 
+import android.annotation.SuppressLint
 import android.location.Location
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -24,7 +25,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 
-class MapFragment : Fragment(), OnMapReadyCallback {
+class MapFragment : Fragment(), OnMapReadyCallback,
+    GoogleMap.OnMapLongClickListener, GoogleMap.OnMyLocationButtonClickListener {
 
     private lateinit var binding: FragmentMapBinding
     private lateinit var map: GoogleMap
@@ -75,12 +77,16 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         })
     }
 
+    @SuppressLint("MissingPermission")
     override fun onMapReady(googleMap: GoogleMap) {
         // setup the map
         map = googleMap
+        map.setOnMapLongClickListener(this)
+        map.setOnMyLocationButtonClickListener(this)
+
         map.uiSettings.isZoomControlsEnabled = true
         map.uiSettings.isCompassEnabled = true
-        map.uiSettings.isMyLocationButtonEnabled = true
+        map.isMyLocationEnabled = true
 
         // update user location asynchronously
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
@@ -89,14 +95,24 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 updateUserLocation(location)
             }
         }
+    }
 
-        // if user long clicks on map add a marker and center map on it
-        map.setOnMapLongClickListener { latLng ->
-            map.clear()
-            map.addMarker(MarkerOptions().position(latLng).title("Selected Location"))
-            val cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 16f)
-            map.animateCamera(cameraUpdate)
+    override fun onMapLongClick(latLng: LatLng) {
+        map.clear()
+        map.addMarker(MarkerOptions().position(latLng).title("Selected Location"))
+        val cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 16f)
+        map.animateCamera(cameraUpdate)
+    }
+
+    override fun onMyLocationButtonClick(): Boolean {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            val location = getUserLocation()
+            withContext(Dispatchers.Main) {
+                updateUserLocation(location)
+            }
         }
+        mapCentered = false
+        return true
     }
 
     private fun getUserLocation(): Location {
