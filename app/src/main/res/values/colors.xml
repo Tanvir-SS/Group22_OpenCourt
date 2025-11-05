@@ -7,4 +7,13 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- AddCourtFragment -->
+    <color name="oc_background">#FAF7FB</color>
+    <color name="oc_card">#ECE8F1</color>
+    <color name="oc_card_light">#F7F0FB</color>
+    <color name="oc_border_line">#A4A4A4</color>
+    <color name="oc_primary">#7B4FEA</color>
+    <color name="oc_text_primary">#222222</color>
+    <color name="oc_icon_tint">#545454</color>
 </resources>

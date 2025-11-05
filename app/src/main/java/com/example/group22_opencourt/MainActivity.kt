@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.widget.ViewPager2
 import com.example.group22_opencourt.databinding.ActivityMainBinding
+import com.example.group22_opencourt.ui.main.AddCourtFragment
 import com.example.group22_opencourt.ui.main.HomeFragment
 import com.example.group22_opencourt.ui.main.MainPagerAdapter
 import com.example.group22_opencourt.ui.main.MapFragment
@@ -26,7 +27,7 @@ class MainActivity : AppCompatActivity() {
         val fragments = ArrayList<Fragment>()
         fragments.add(HomeFragment())
         fragments.add(MapFragment())
-        fragments.add( SimpleTextFragment.newInstance("Add Court"))
+        fragments.add(AddCourtFragment())
         fragments.add( SimpleTextFragment.newInstance("Settings"))
 
 

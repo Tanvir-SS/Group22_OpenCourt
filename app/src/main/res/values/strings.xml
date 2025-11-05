@@ -8,4 +8,24 @@
     <string name="map">Map</string>
     <string name="new_court">New Court</string>
     <string name="settings">Settings</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <!--AddCourtFragment-->
+    <string name="court_name">Court Name</string>
+    <string name="court_name_hint">SFU Courts</string>
+    <string name="court_type">Court Type</string>
+    <string name="court_type_hint">Tennis</string>
+    <string name="address">Address</string>
+    <string name="address_hint">Address, Example Street, Burnaby, BC</string>
+    <string name="num_courts">Number of Courts</string>
+    <string name="num_courts_hint">4</string>
+    <string name="amenities">Amenities</string>
+    <string name="lights">Lights</string>
+    <string name="outdoor">Outdoor</string>
+    <string name="washroom">Washroom</string>
+    <string name="accessibility">Accessibility</string>
+    <string name="apply">Apply</string>
+    <string name="clear">Clear</string>
+
 </resources>
