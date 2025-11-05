@@ -80,6 +80,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         map = googleMap
         map.uiSettings.isZoomControlsEnabled = true
         map.uiSettings.isCompassEnabled = true
+        map.uiSettings.isMyLocationButtonEnabled = true
 
         // update user location asynchronously
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
@@ -87,6 +88,14 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             withContext(Dispatchers.Main) {
                 updateUserLocation(location)
             }
+        }
+
+        // if user long clicks on map add a marker and center map on it
+        map.setOnMapLongClickListener { latLng ->
+            map.clear()
+            map.addMarker(MarkerOptions().position(latLng).title("Selected Location"))
+            val cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 16f)
+            map.animateCamera(cameraUpdate)
         }
     }
 
