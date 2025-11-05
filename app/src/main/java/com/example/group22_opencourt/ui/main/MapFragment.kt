@@ -6,6 +6,8 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import androidx.lifecycle.lifecycleScope
 import com.example.group22_opencourt.MainActivity
 import com.example.group22_opencourt.R
@@ -16,6 +18,7 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.material.navigation.NavigationBarView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -47,12 +50,34 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             }
             mapFragment!!.getMapAsync(this)
         }
+        setupMapTypeSpinner()
+    }
+
+    private fun setupMapTypeSpinner() {
+        // set up a spinner for map types
+        val mapTypes = resources.getStringArray(R.array.map_types)
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, mapTypes)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.mapTypeSpinner.adapter = adapter
+        // default to normal map type
+        binding.mapTypeSpinner.setSelection(0)
+        // change map type for spinner selection
+        binding.mapTypeSpinner.setOnItemSelectedListener(object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
+                when (position) {
+                    0 -> map.mapType = GoogleMap.MAP_TYPE_NORMAL
+                    1 -> map.mapType = GoogleMap.MAP_TYPE_SATELLITE
+                    2 -> map.mapType = GoogleMap.MAP_TYPE_TERRAIN
+                    3 -> map.mapType = GoogleMap.MAP_TYPE_HYBRID
+                }
+            }
+            override fun onNothingSelected(parent: AdapterView<*>) {}
+        })
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
         // setup the map
         map = googleMap
-        map.mapType = GoogleMap.MAP_TYPE_NORMAL
         map.uiSettings.isZoomControlsEnabled = true
         map.uiSettings.isCompassEnabled = true
 
