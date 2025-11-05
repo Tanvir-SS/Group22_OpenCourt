@@ -37,8 +37,26 @@ class HomeFragment : Fragment() {
 
         binding.recyclerView.adapter = HomeRecyclerViewAdapter(PlaceholderContent.ITEMS)
 
-
-
+        // Filter button logic
+        binding.filterButton.setOnClickListener {
+            val inflater = LayoutInflater.from(requireContext())
+            val popupView = inflater.inflate(R.layout.filter_popup, null)
+            // Ensure the popup is at least as wide as the button or 180dp
+            val minWidthPx = (180 * resources.displayMetrics.density).toInt()
+            val buttonWidth = binding.filterButton.width
+            val popupWidth = if (buttonWidth > minWidthPx) buttonWidth else minWidthPx
+            val popupWindow = android.widget.PopupWindow(
+                popupView,
+                popupWidth,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                true
+            )
+            // Set background to transparent to preserve rounded corners
+            popupWindow.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+            popupWindow.isOutsideTouchable = true
+            // Show below the filter button
+            popupWindow.showAsDropDown(binding.filterButton, 0, 0)
+        }
     }
 
 
