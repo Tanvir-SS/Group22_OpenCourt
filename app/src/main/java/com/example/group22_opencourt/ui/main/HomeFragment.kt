@@ -16,7 +16,8 @@ import com.example.group22_opencourt.ui.main.placeholder.PlaceholderContent
 class HomeFragment : Fragment() {
 
     private lateinit var binding: FragmentHomeBinding
-
+    private var selectedSports = mutableSetOf("tennis", "basketball")
+    private lateinit var adapter: HomeRecyclerViewAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -28,20 +29,19 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        //add border between vertical items in the recycler view
         val dividerItemDecoration = DividerItemDecoration(
             binding.recyclerView.context,
             DividerItemDecoration.VERTICAL
         )
         binding.recyclerView.addItemDecoration(dividerItemDecoration)
 
-        binding.recyclerView.adapter = HomeRecyclerViewAdapter(PlaceholderContent.ITEMS)
+        adapter = HomeRecyclerViewAdapter(PlaceholderContent.ITEMS)
+        binding.recyclerView.adapter = adapter
 
         // Filter button logic
         binding.filterButton.setOnClickListener {
             val inflater = LayoutInflater.from(requireContext())
             val popupView = inflater.inflate(R.layout.filter_popup, null)
-            // Ensure the popup is at least as wide as the button or 180dp
             val minWidthPx = (180 * resources.displayMetrics.density).toInt()
             val buttonWidth = binding.filterButton.width
             val popupWidth = if (buttonWidth > minWidthPx) buttonWidth else minWidthPx
@@ -51,13 +51,28 @@ class HomeFragment : Fragment() {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 true
             )
-            // Set background to transparent to preserve rounded corners
             popupWindow.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
             popupWindow.isOutsideTouchable = true
-            // Show below the filter button
+            // Set initial checkbox states
+            val tennisCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.checkbox_tennis)
+            val basketballCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.checkbox_basketball)
+            tennisCheck.isChecked = selectedSports.contains("tennis")
+            basketballCheck.isChecked = selectedSports.contains("basketball")
+            // Checkbox listeners
+            tennisCheck.setOnCheckedChangeListener { _, isChecked ->
+                if (isChecked) selectedSports.add("tennis") else selectedSports.remove("tennis")
+                filterList()
+            }
+            basketballCheck.setOnCheckedChangeListener { _, isChecked ->
+                if (isChecked) selectedSports.add("basketball") else selectedSports.remove("basketball")
+                filterList()
+            }
             popupWindow.showAsDropDown(binding.filterButton, 0, 0)
         }
     }
 
-
+    private fun filterList() {
+        val filtered = PlaceholderContent.ITEMS.filter { selectedSports.contains(it.sport) }
+        adapter.setItems(filtered)
+    }
 }

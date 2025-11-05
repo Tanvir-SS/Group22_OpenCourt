@@ -36,7 +36,8 @@ object PlaceholderContent {
     }
 
     private fun createPlaceholderItem(position: Int): PlaceholderItem {
-        return PlaceholderItem(position.toString(), "Item " + position, makeDetails(position))
+        val sport = if (position % 2 == 0) "tennis" else "basketball"
+        return PlaceholderItem(position.toString(), "Court $position", makeDetails(position), sport)
     }
 
     private fun makeDetails(position: Int): String {
@@ -51,7 +52,12 @@ object PlaceholderContent {
     /**
      * A placeholder item representing a piece of content.
      */
-    data class PlaceholderItem(val id: String, val content: String, val details: String) {
+    data class PlaceholderItem(
+        val id: String,
+        val content: String,
+        val details: String,
+        val sport: String // "tennis" or "basketball"
+    ) {
         override fun toString(): String = content
     }
 }
