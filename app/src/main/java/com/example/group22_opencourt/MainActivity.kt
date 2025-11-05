@@ -11,6 +11,7 @@ import com.example.group22_opencourt.ui.main.AddCourtFragment
 import com.example.group22_opencourt.ui.main.HomeFragment
 import com.example.group22_opencourt.ui.main.MainPagerAdapter
 import com.example.group22_opencourt.ui.main.MapFragment
+import com.example.group22_opencourt.ui.main.SettingsFragment
 import com.example.group22_opencourt.ui.main.SimpleTextFragment
 
 class MainActivity : AppCompatActivity() {
@@ -28,7 +29,7 @@ class MainActivity : AppCompatActivity() {
         fragments.add(HomeFragment())
         fragments.add(MapFragment())
         fragments.add(AddCourtFragment())
-        fragments.add( SimpleTextFragment.newInstance("Settings"))
+        fragments.add(SettingsFragment())
 
 
 
