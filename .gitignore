@@ -1,6 +1,7 @@
 *.iml
 .gradle
 /local.properties
+.idea/
 /.idea/
 /.idea/caches
 /.idea/libraries
@@ -21,3 +22,6 @@ local.properties
 .kotlin/
 
 .idea/deviceManager.xml
+
+google-services.json
+
