@@ -12,8 +12,12 @@ import com.example.group22_opencourt.model.Court
 import com.example.group22_opencourt.model.TennisCourt
 
 class HomeRecyclerViewAdapter(
-    private var list: List<Court>
+    private var fullList: List<Court>
 ) : RecyclerView.Adapter<HomeRecyclerViewAdapter.ViewHolder>() {
+
+    private var displayList: List<Court> = fullList
+    private var showTennis = true
+    private var showBasketball = true
 
     class ViewHolder(binding: HomeFragmentItemBinding) : RecyclerView.ViewHolder(binding.root) {
         val nameView: TextView = binding.courtNameText
@@ -32,10 +36,9 @@ class HomeRecyclerViewAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val court = list[position]
+        val court = displayList[position]
         holder.nameView.text = court.base.name
         holder.cityView.text = court.base.city
-        holder.imageView
         when (court) {
             is BasketballCourt -> holder.imageView.setImageResource(R.drawable.basketballcourtexample)
             is TennisCourt -> holder.imageView.setImageResource(R.drawable.example_tennis_court)
@@ -43,11 +46,20 @@ class HomeRecyclerViewAdapter(
     }
 
     override fun getItemCount(): Int {
-        return list.size
+        return displayList.size
     }
 
     fun setItems(newList: List<Court>) {
-        list = newList
+        fullList = newList
+        applyFilter(showTennis, showBasketball)
+    }
+
+    fun applyFilter(showTennis: Boolean, showBasketball: Boolean) {
+        this.showTennis = showTennis
+        this.showBasketball = showBasketball
+        displayList = fullList.filter {
+            (showTennis && it.type == "tennis") || (showBasketball && it.type == "basketball")
+        }
         notifyDataSetChanged()
     }
 

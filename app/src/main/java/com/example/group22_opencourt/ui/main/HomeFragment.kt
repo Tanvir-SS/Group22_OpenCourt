@@ -19,6 +19,10 @@ class HomeFragment : Fragment() {
     private lateinit var adapter: HomeRecyclerViewAdapter
     private val viewModel: HomeViewModel by activityViewModels()
 
+    // Filter state
+    private var showTennis = true
+    private var showBasketball = true
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -58,15 +62,21 @@ class HomeFragment : Fragment() {
             )
             popupWindow.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
             popupWindow.isOutsideTouchable = true
-            // Set initial checkbox states (visual only, no filtering)
+            // Set initial checkbox states
             val tennisCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(
                 R.id.checkbox_tennis)
             val basketballCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.checkbox_basketball)
-            tennisCheck.isChecked = false
-            basketballCheck.isChecked = false
-            // Checkbox listeners (visual only, no filtering)
-            tennisCheck.setOnCheckedChangeListener { _, _ -> /* no-op */ }
-            basketballCheck.setOnCheckedChangeListener { _, _ -> /* no-op */ }
+            tennisCheck.isChecked = showTennis
+            basketballCheck.isChecked = showBasketball
+            // Checkbox listeners
+            tennisCheck.setOnCheckedChangeListener { _, isChecked ->
+                showTennis = isChecked
+                adapter.applyFilter(showTennis, showBasketball)
+            }
+            basketballCheck.setOnCheckedChangeListener { _, isChecked ->
+                showBasketball = isChecked
+                adapter.applyFilter(showTennis, showBasketball)
+            }
             popupWindow.showAsDropDown(binding.filterButton, 0, 0)
         }
     }
