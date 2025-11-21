@@ -1,17 +1,36 @@
 package com.example.group22_opencourt.model
 
 import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.firestore.GeoPoint
 
-data class Court(
+data class CourtBase(
     var id: String = "",
-    val city: String = "",
-    val name: String = "",
-    val address: String = "",
-    val washroom: Boolean = false,
-    val indoor : Boolean = false,
-    val lights : Boolean = false,
-    val latLng: LatLng = LatLng(1.0,1.0),
-    val totalCourts: Int = 1,
-    val photoURL: String = "",
-    val courtStatus : ArrayList<CourtStatus> = ArrayList<CourtStatus>()
+    var city: String = "",
+    var name: String = "",
+    var address: String = "",
+    var washroom: Boolean? = null,
+    var indoor: Boolean? = null,
+    var lights: Boolean? = null,
+    var totalCourts: Int = 1,
+    var courtsAvailable: Int = 1,
+    var photoURL: String = "",
+    var courtStatus: ArrayList<CourtStatus> = ArrayList(),
+    var geoPoint: GeoPoint? = null
 )
+
+sealed interface Court {
+    var base: CourtBase
+    var type: String
+}
+
+data class TennisCourt(
+    override var base: CourtBase = CourtBase(),
+    override var type: String = "tennis",
+    var practiceWall: Boolean? = null
+) : Court
+
+data class BasketballCourt(
+    override var base: CourtBase = CourtBase(),
+    override var type: String = "basketball",
+    var nets: Boolean? = null
+) : Court

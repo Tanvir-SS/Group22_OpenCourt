@@ -1,9 +1,10 @@
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.group22_opencourt.model.Court
+import com.example.group22_opencourt.model.TennisCourt
+import com.example.group22_opencourt.model.BasketballCourt
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.*
-
 
 class CourtRepository {
 
@@ -17,36 +18,36 @@ class CourtRepository {
 
     /** Start listening for courts in a city */
     fun listenCourtsByCity(city: String) {
-        // Remove any previous listener
         listenerRegistration?.remove()
         listenerRegistration = courtsCollection
 //            .whereEqualTo("city", city)
             .addSnapshotListener { snapshot, error ->
                 if (error != null || snapshot == null) return@addSnapshotListener
 
-                // Get current value or start with empty list
                 val currentCourts = _courts.value?.toMutableList() ?: mutableListOf()
 
-                // Process incremental changes
                 for (change in snapshot.documentChanges) {
-                    val court = change.document.toObject(Court::class.java)
-                    court.id = change.document.id
+                    val doc = change.document
+                    val type = doc.getString("type") ?: ""
+                    val court: Court = when (type) {
+                        "tennis" -> doc.toObject(TennisCourt::class.java).apply { base.id = doc.id }
+                        "basketball" -> doc.toObject(BasketballCourt::class.java).apply { base.id = doc.id }
+                        else -> doc.toObject(TennisCourt::class.java).apply { base.id = doc.id } // fallback
+                    }
 
                     when (change.type) {
                         DocumentChange.Type.ADDED -> currentCourts.add(court)
                         DocumentChange.Type.MODIFIED -> {
-                            val index = currentCourts.indexOfFirst { it.id == court.id }
+                            val index = currentCourts.indexOfFirst { it.base.id == court.base.id }
                             if (index != -1) {
                                 currentCourts[index] = court
                             }
                         }
                         DocumentChange.Type.REMOVED -> {
-                            currentCourts.removeAll { it.id == court.id }
+                            currentCourts.removeAll { it.base.id == court.base.id }
                         }
                     }
                 }
-
-                // Post updated list to LiveData
                 _courts.postValue(currentCourts)
             }
     }
@@ -61,7 +62,7 @@ class CourtRepository {
     fun addCourt(court: Court, onComplete: ((Boolean) -> Unit)? = null) {
         courtsCollection.add(court)
             .addOnSuccessListener { docRef ->
-                court.id = docRef.id
+                court.base.id = docRef.id
                 onComplete?.invoke(true)
             }
             .addOnFailureListener {
@@ -71,8 +72,8 @@ class CourtRepository {
 
     /** Update an existing court */
     fun updateCourt(court: Court, onComplete: ((Boolean) -> Unit)? = null) {
-        if (court.id.isNotEmpty()) {
-            courtsCollection.document(court.id)
+        if (court.base.id.isNotEmpty()) {
+            courtsCollection.document(court.base.id)
                 .set(court, SetOptions.merge())
                 .addOnSuccessListener { onComplete?.invoke(true) }
                 .addOnFailureListener { onComplete?.invoke(false) }
@@ -80,14 +81,12 @@ class CourtRepository {
     }
 
     /** Delete a court */
-    //Unit is void
     fun deleteCourt(court: Court, onComplete: ((Boolean) -> Unit)? = null) {
-        if (court.id.isNotEmpty()) {
-            courtsCollection.document(court.id)
+        if (court.base.id.isNotEmpty()) {
+            courtsCollection.document(court.base.id)
                 .delete()
                 .addOnSuccessListener { onComplete?.invoke(true) }
                 .addOnFailureListener { onComplete?.invoke(false) }
         }
-
     }
 }

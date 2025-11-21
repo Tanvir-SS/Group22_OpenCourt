@@ -1,25 +1,23 @@
 package com.example.group22_opencourt.ui.main
 
-import CourtRepository
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.group22_opencourt.R
 import com.example.group22_opencourt.databinding.FragmentHomeBinding
-import com.example.group22_opencourt.ui.main.placeholder.PlaceholderContent
+import com.example.group22_opencourt.model.Court
 
 class HomeFragment : Fragment() {
 
     private lateinit var binding: FragmentHomeBinding
-    private var selectedSports = mutableSetOf("tennis", "basketball")
     private lateinit var adapter: HomeRecyclerViewAdapter
+    private val viewModel: HomeViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -37,8 +35,13 @@ class HomeFragment : Fragment() {
         )
         binding.recyclerView.addItemDecoration(dividerItemDecoration)
 
-        adapter = HomeRecyclerViewAdapter(PlaceholderContent.ITEMS)
+        adapter = HomeRecyclerViewAdapter(emptyList())
         binding.recyclerView.adapter = adapter
+
+        // Observe courts from ViewModel and update adapter
+        viewModel.courts.observe(viewLifecycleOwner) { courts ->
+            adapter.setItems(courts)
+        }
 
         // Filter button logic
         binding.filterButton.setOnClickListener {
@@ -55,26 +58,16 @@ class HomeFragment : Fragment() {
             )
             popupWindow.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
             popupWindow.isOutsideTouchable = true
-            // Set initial checkbox states
-            val tennisCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.checkbox_tennis)
+            // Set initial checkbox states (visual only, no filtering)
+            val tennisCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(
+                R.id.checkbox_tennis)
             val basketballCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.checkbox_basketball)
-            tennisCheck.isChecked = selectedSports.contains("tennis")
-            basketballCheck.isChecked = selectedSports.contains("basketball")
-            // Checkbox listeners
-            tennisCheck.setOnCheckedChangeListener { _, isChecked ->
-                if (isChecked) selectedSports.add("tennis") else selectedSports.remove("tennis")
-                filterList()
-            }
-            basketballCheck.setOnCheckedChangeListener { _, isChecked ->
-                if (isChecked) selectedSports.add("basketball") else selectedSports.remove("basketball")
-                filterList()
-            }
+            tennisCheck.isChecked = false
+            basketballCheck.isChecked = false
+            // Checkbox listeners (visual only, no filtering)
+            tennisCheck.setOnCheckedChangeListener { _, _ -> /* no-op */ }
+            basketballCheck.setOnCheckedChangeListener { _, _ -> /* no-op */ }
             popupWindow.showAsDropDown(binding.filterButton, 0, 0)
         }
-    }
-
-    private fun filterList() {
-        val filtered = PlaceholderContent.ITEMS.filter { selectedSports.contains(it.sport) }
-        adapter.setItems(filtered)
     }
 }
