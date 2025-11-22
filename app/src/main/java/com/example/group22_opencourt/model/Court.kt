@@ -11,6 +11,7 @@ data class CourtBase(
     var washroom: Boolean? = null,
     var indoor: Boolean? = null,
     var lights: Boolean? = null,
+    var accessibility : Boolean? = null,
     var totalCourts: Int = 1,
     var courtsAvailable: Int = 1,
     var photoURL: String = "",

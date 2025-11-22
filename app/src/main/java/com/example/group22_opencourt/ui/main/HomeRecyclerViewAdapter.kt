@@ -22,6 +22,7 @@ class HomeRecyclerViewAdapter(
     class ViewHolder(binding: HomeFragmentItemBinding) : RecyclerView.ViewHolder(binding.root) {
         val nameView: TextView = binding.courtNameText
         val cityView: TextView = binding.courtCityText
+        val addressView : TextView = binding.courtAddressText
         val imageView: ImageView = binding.courtImageView
     }
 
@@ -38,7 +39,9 @@ class HomeRecyclerViewAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val court = displayList[position]
         holder.nameView.text = court.base.name
-        holder.cityView.text = court.base.city
+//        holder.cityView.text = court.base.city
+        holder.addressView.text = court.base.address
+
         when (court) {
             is BasketballCourt -> holder.imageView.setImageResource(R.drawable.basketballcourtexample)
             is TennisCourt -> holder.imageView.setImageResource(R.drawable.example_tennis_court)
@@ -49,6 +52,9 @@ class HomeRecyclerViewAdapter(
         return displayList.size
     }
 
+//    fun sort() {
+//        fullList = fullList.sortedBy { it.base.name.lowercase() }
+//    }
     fun setItems(newList: List<Court>) {
         fullList = newList
         applyFilter(showTennis, showBasketball)

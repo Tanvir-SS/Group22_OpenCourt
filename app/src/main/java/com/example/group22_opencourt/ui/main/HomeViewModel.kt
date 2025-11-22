@@ -7,7 +7,7 @@ import com.example.group22_opencourt.model.Court
 
 
 class HomeViewModel : ViewModel() {
-    private val repository = CourtRepository()
+    private val repository = CourtRepository.instance
     val courts: LiveData<List<Court>> = repository.courts
 
     init {

@@ -6,7 +6,7 @@ import com.example.group22_opencourt.model.BasketballCourt
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.*
 
-class CourtRepository {
+class CourtRepository private constructor() {
 
     private val db = Firebase.firestore
     private val courtsCollection = db.collection("courts")
@@ -88,5 +88,9 @@ class CourtRepository {
                 .addOnSuccessListener { onComplete?.invoke(true) }
                 .addOnFailureListener { onComplete?.invoke(false) }
         }
+    }
+
+    companion object {
+        val instance: CourtRepository by lazy { CourtRepository() }
     }
 }
