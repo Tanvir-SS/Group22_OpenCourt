@@ -28,6 +28,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
     private val PERMISSION_REQUEST_CODE = 0
     private lateinit var locationManager: LocationManager
     private val mapFragment = MapFragment()
+    private val homeFragment = HomeFragment()
     var currentLocation: Location? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,7 +40,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
         checkPermissions()
 
         val fragments = ArrayList<Fragment>()
-        fragments.add(HomeFragment())
+        fragments.add(homeFragment)
         fragments.add(MapFragment())
         fragments.add(AddCourtFragment())
         fragments.add(SettingsFragment())
@@ -103,6 +104,9 @@ class MainActivity : AppCompatActivity(), LocationListener {
         // send update to map fragment
         if (mapFragment.isAdded) {
             mapFragment.updateUserLocation(location)
+        }
+        if (homeFragment.isAdded) {
+            homeFragment.updateUserLocation(location)
         }
     }
 

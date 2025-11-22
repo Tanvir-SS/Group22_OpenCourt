@@ -1,5 +1,6 @@
 package com.example.group22_opencourt.ui.main
 
+import android.location.Location
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -12,6 +13,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.group22_opencourt.R
 import com.example.group22_opencourt.databinding.FragmentHomeBinding
 import com.example.group22_opencourt.model.Court
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 
 class HomeFragment : Fragment() {
 
@@ -22,6 +26,8 @@ class HomeFragment : Fragment() {
     // Filter state
     private var showTennis = true
     private var showBasketball = true
+    private var lastUserLocation: Location? = null
+    private val locationUpdateThresholdMeters = 50f
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -78,6 +84,32 @@ class HomeFragment : Fragment() {
                 adapter.applyFilter(showTennis, showBasketball)
             }
             popupWindow.showAsDropDown(binding.filterButton, 0, 0)
+        }
+    }
+
+    fun updateUserLocation(location: Location) {
+        val lastLocation = lastUserLocation
+        val shouldUpdate = lastLocation == null || location.distanceTo(lastLocation) > locationUpdateThresholdMeters
+        if (shouldUpdate) {
+            adapter.location = location
+            lastUserLocation = location
+            val courts = adapter.getFullList() // get current courts from adapter
+            val sortedCourts = courts.sortedBy { court: Court ->
+                val geoPoint = court.base.geoPoint
+                if (geoPoint != null) {
+                    val results = FloatArray(1)
+                    Location.distanceBetween(
+                        location.latitude, location.longitude,
+                        geoPoint.latitude, geoPoint.longitude,
+                        results
+                    )
+                    results[0]
+                } else {
+                    Float.MAX_VALUE // If no location, put at end
+                }
+            }
+            adapter.setItems(sortedCourts)
+            adapter.applyFilter(showTennis, showBasketball)
         }
     }
 }
