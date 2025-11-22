@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -19,6 +21,15 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        android.buildFeatures.buildConfig = true
+        // Access the key from local.properties (Kotlin DSL)
+        val properties = Properties().apply {
+            load(rootProject.file("local.properties").inputStream())
+        }
+        val apiKey: String = properties.getProperty("MAPS_API_KEY")
+
+        // Expose to BuildConfig
+        buildConfigField("String", "MAPS_API_KEY", "\"$apiKey\"")
     }
 
     buildTypes {
@@ -67,4 +78,6 @@ dependencies {
 
     implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
     implementation("com.google.firebase:firebase-firestore")
+
+    implementation("com.github.bumptech.glide:glide:5.0.5")
 }

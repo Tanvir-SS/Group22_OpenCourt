@@ -63,8 +63,19 @@ class HomeRecyclerViewAdapter(
 
 
         when (court) {
-            is BasketballCourt -> holder.imageView.setImageResource(R.drawable.basketballcourtexample)
-            is TennisCourt -> holder.imageView.setImageResource(R.drawable.example_tennis_court)
+            is BasketballCourt -> {
+                if (court.base.photoURL.isNotEmpty()){
+                    CourtRepository.loadPhoto(court, holder.imageView)
+                } else {
+                    holder.imageView.setImageResource(R.drawable.basketballcourtexample)
+                }
+
+            }
+            is TennisCourt ->  if (court.base.photoURL.isNotEmpty()){
+                CourtRepository.loadPhoto(court, holder.imageView)
+            } else {
+                holder.imageView.setImageResource(R.drawable.example_tennis_court)
+            }
         }
     }
 

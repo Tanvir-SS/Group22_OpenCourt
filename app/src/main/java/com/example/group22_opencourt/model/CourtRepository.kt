@@ -1,5 +1,8 @@
+import android.widget.ImageView
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.bumptech.glide.Glide
+import com.example.group22_opencourt.BuildConfig
 import com.example.group22_opencourt.model.Court
 import com.example.group22_opencourt.model.TennisCourt
 import com.example.group22_opencourt.model.BasketballCourt
@@ -90,7 +93,23 @@ class CourtRepository private constructor() {
         }
     }
 
+
+
     companion object {
         val instance: CourtRepository by lazy { CourtRepository() }
+
+        fun loadPhoto(court : Court, imageView : ImageView) {
+            if (court.base.photoURL.isEmpty()) {
+                return
+            }
+            val photoUrl =
+                "https://maps.googleapis.com/maps/api/place/photo" +
+                        "?maxwidth=400" +
+                        "&photoreference=${court.base.photoURL}" +
+                        "&key=${BuildConfig.MAPS_API_KEY}"
+            Glide.with(imageView.context)
+                .load(photoUrl)
+                .into(imageView)
+        }
     }
 }
