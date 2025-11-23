@@ -6,7 +6,7 @@
     android:gravity="center_vertical"
     android:padding="10dp">
     <View
-        android:id="@+id/status_color_bar"
+        android:id="@+id/status_color_square"
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:background="@color/oc_available" />

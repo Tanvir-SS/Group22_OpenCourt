@@ -1,19 +1,35 @@
 package com.example.group22_opencourt.ui.detail
 
 import CourtRepository
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.group22_opencourt.R
 import com.example.group22_opencourt.model.TennisCourt
 import com.example.group22_opencourt.model.BasketballCourt
+import com.example.group22_opencourt.model.Court
+import com.example.group22_opencourt.model.CourtStatus
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
 
 class CourtDetailFragment : Fragment() {
     private lateinit var viewModel: CourtDetailViewModel
+    private lateinit var courtsRecyclerView : RecyclerView
+
+    private lateinit var adapter: CourtStatusAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -25,11 +41,15 @@ class CourtDetailFragment : Fragment() {
         val documentId = arguments?.getString("document_id") ?: "1EYahQs7n7ZUF6qPPAjT"
         // Set up ViewModel
         viewModel = ViewModelProvider(this, CourtDetailViewModelFactory(documentId)).get(CourtDetailViewModel::class.java)
+        courtsRecyclerView = view.findViewById<RecyclerView>(R.id.courts_recycler_view)
         return view
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        courtsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        adapter = CourtStatusAdapter(emptyList(), lifecycleScope)
+        courtsRecyclerView.adapter = adapter
         viewModel.courtLiveData.observe(viewLifecycleOwner) { court ->
             Log.d("debug", "message")
             if (court != null) {
@@ -64,8 +84,8 @@ class CourtDetailFragment : Fragment() {
                 amenitiesView.text = if (amenitiesList.isNotEmpty()) amenitiesList.joinToString(" · ") else "None"
 
                 // Update courts list RecyclerView (uncomment and implement CourtStatusAdapter)
-                // val courtsRecyclerView = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.courts_recycler_view)
-                // courtsRecyclerView.adapter = CourtStatusAdapter(court.base.courtStatus)
+                adapter.setItems(court.base.courtStatus)
+
 
                 // Update map image
                  CourtRepository.loadMapPhoto(court, view.findViewById(R.id.map_image))
@@ -73,4 +93,60 @@ class CourtDetailFragment : Fragment() {
         }
     }
 
+}
+
+
+class CourtStatusAdapter(private var items: List<CourtStatus>, private val lifecycleScope: CoroutineScope) : RecyclerView.Adapter<CourtStatusAdapter.ViewHolder>() {
+    class ViewHolder(val view: android.view.View) : RecyclerView.ViewHolder(view) {
+        val colorSquare = view.findViewById<View>(R.id.status_color_square)
+        val nameView = view.findViewById<android.widget.TextView>(R.id.court_name)
+        val statusView = view.findViewById<android.widget.TextView>(R.id.court_status)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        val view = inflater.inflate(R.layout.item_court_status, parent, false)
+        return ViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val courtStatus = items[position]
+        holder.nameView.text = "Court ${position + 1}"
+        holder.statusView.text = if (courtStatus.courtAvailable) "Available" else "In Play"
+        // Set color bar based on status
+        if (courtStatus.courtAvailable)  {
+            holder.colorSquare.setBackgroundColor(ContextCompat.getColor(holder.itemView.context, R.color.oc_available))
+        } else {
+            holder.colorSquare.setBackgroundColor(ContextCompat.getColor(holder.itemView.context, R.color.oc_unavailable))
+        }
+
+    }
+
+    override fun getItemCount(): Int = items.size
+
+    fun setItems(newList: List<CourtStatus>, onSuccess: (() -> Unit)? = null) {
+        val oldList = items // Make a copy for thread safety
+        lifecycleScope.launch(Dispatchers.Default) {
+            val diffCallback = object : DiffUtil.Callback() {
+                override fun getOldListSize() = oldList.size
+                override fun getNewListSize() = newList.size
+                override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                    return oldList[oldItemPosition] == newList[newItemPosition]
+                }
+
+                override fun areContentsTheSame(
+                    oldItemPosition: Int,
+                    newItemPosition: Int
+                ): Boolean {
+                    return oldList[oldItemPosition] == newList[newItemPosition]
+                }
+            }
+            val diffResult = DiffUtil.calculateDiff(diffCallback)
+            withContext(Dispatchers.Main) {
+                items = newList
+                diffResult.dispatchUpdatesTo(this@CourtStatusAdapter)
+                onSuccess?.invoke()
+            }
+        }
+    }
 }

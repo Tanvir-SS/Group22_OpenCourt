@@ -77,16 +77,6 @@
                 android:scaleType="centerCrop"
                 android:background="#DDDDDD" />
 
-            <!-- Courts List -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/courts_recycler_view"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:background="#FFF7FF"
-                tools:listitem="@layout/item_court_status"
-                android:scrollbars="none" />
-
             <!-- Amenities -->
             <TextView
                 android:id="@+id/amenities_label"
@@ -103,6 +93,16 @@
                 android:text="Lights · Outdoor · Washroom · Accessibility"
                 android:textSize="14sp"
                 android:layout_marginTop="4dp" />
+
+            <!-- Courts List -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/courts_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="#FFF7FF"
+                tools:listitem="@layout/item_court_status"
+                android:scrollbars="none" />
 
             <!-- Check In button at the end of the scrollable content -->
             <View
