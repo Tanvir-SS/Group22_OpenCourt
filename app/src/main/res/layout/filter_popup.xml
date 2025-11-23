@@ -27,4 +27,41 @@
         android:paddingEnd="12dp"
         android:textColor="@color/white"
         app:buttonTint="@color/white" />
+
+    <!-- Distance slider label -->
+    <TextView
+        android:id="@+id/distance_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Distance within"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:layout_marginTop="12dp" />
+
+    <!-- Distance slider -->
+    <com.google.android.material.slider.Slider
+        android:id="@+id/distance_slider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:valueFrom="0"
+        android:valueTo="4"
+        android:stepSize="1"
+        app:trackColor="@color/white"
+        app:thumbColor="@color/white"
+        app:haloColor="@color/white"
+        app:tickColor="@color/white"
+        app:labelBehavior="gone"
+        android:layout_marginTop="8dp" />
+
+    <!-- Selected distance display -->
+    <TextView
+        android:id="@+id/distance_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="1 km"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        android:layout_marginTop="4dp"
+        android:layout_gravity="center_horizontal" />
+
 </LinearLayout>

@@ -5,21 +5,24 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.example.group22_opencourt.R
 import com.example.group22_opencourt.databinding.HomeFragmentItemBinding
 import com.example.group22_opencourt.model.BasketballCourt
 import com.example.group22_opencourt.model.Court
 import com.example.group22_opencourt.model.TennisCourt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
+import kotlin.collections.get
 
 class HomeRecyclerViewAdapter(
-    private var fullList: List<Court>
+    private var courtList: List<Court>, private var lifecycleScope: CoroutineScope
 ) : RecyclerView.Adapter<HomeRecyclerViewAdapter.ViewHolder>() {
-
-    private var displayList: List<Court> = fullList
-    private var showTennis = true
-    private var showBasketball = true
 
     var location : Location? = null
 
@@ -42,7 +45,7 @@ class HomeRecyclerViewAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val court = displayList[position]
+        val court = courtList[position]
         holder.nameView.text = court.base.name
 //        holder.cityView.text = court.base.city
         holder.addressView.text = court.base.address
@@ -80,28 +83,36 @@ class HomeRecyclerViewAdapter(
     }
 
     override fun getItemCount(): Int {
-        return displayList.size
+        return courtList.size
     }
 
-//    fun sort() {
-//        fullList = fullList.sortedBy { it.base.name.lowercase() }
-//    }
     fun setItems(newList: List<Court>) {
-        fullList = newList
-        applyFilter(showTennis, showBasketball)
-    }
+        val oldList = courtList // Make a copy for thread safety
+        lifecycleScope.launch(Dispatchers.Default) {
+            val diffCallback = object : DiffUtil.Callback() {
+                override fun getOldListSize() = oldList.size
+                override fun getNewListSize() = newList.size
+                override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                    return oldList[oldItemPosition].base.name == newList[newItemPosition].base.name
+                }
 
-    fun applyFilter(showTennis: Boolean, showBasketball: Boolean) {
-        this.showTennis = showTennis
-        this.showBasketball = showBasketball
-        displayList = fullList.filter {
-            (showTennis && it.type == "tennis") || (showBasketball && it.type == "basketball")
+                override fun areContentsTheSame(
+                    oldItemPosition: Int,
+                    newItemPosition: Int
+                ): Boolean {
+                    return oldList[oldItemPosition] == newList[newItemPosition]
+                }
+            }
+            val diffResult = DiffUtil.calculateDiff(diffCallback)
+            withContext(Dispatchers.Main) {
+                courtList = newList
+                diffResult.dispatchUpdatesTo(this@HomeRecyclerViewAdapter)
+            }
         }
-        notifyDataSetChanged()
     }
 
     fun getFullList(): List<Court> {
-        return fullList
+        return courtList
     }
 
 }

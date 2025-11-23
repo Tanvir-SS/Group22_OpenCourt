@@ -8,11 +8,14 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.group22_opencourt.R
 import com.example.group22_opencourt.databinding.FragmentHomeBinding
+import com.example.group22_opencourt.model.BasketballCourt
 import com.example.group22_opencourt.model.Court
+import com.example.group22_opencourt.model.TennisCourt
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
@@ -28,6 +31,10 @@ class HomeFragment : Fragment() {
     private var showBasketball = true
     private var lastUserLocation: Location? = null
     private val locationUpdateThresholdMeters = 50f
+    private var selectedDistanceKm = 5 // Default distance
+    private val distanceIntervals = listOf(1, 2, 5, 10, 25)
+
+    private var courts = emptyList<Court>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -45,12 +52,14 @@ class HomeFragment : Fragment() {
         )
         binding.recyclerView.addItemDecoration(dividerItemDecoration)
 
-        adapter = HomeRecyclerViewAdapter(emptyList())
+        adapter = HomeRecyclerViewAdapter(courts, viewLifecycleOwner.lifecycleScope)
         binding.recyclerView.adapter = adapter
 
         // Observe courts from ViewModel and update adapter
         viewModel.courts.observe(viewLifecycleOwner) { courts ->
             adapter.setItems(courts)
+            this@HomeFragment.courts = courts
+            applyAllFilters()
         }
 
         // Filter button logic
@@ -77,24 +86,55 @@ class HomeFragment : Fragment() {
             // Checkbox listeners
             tennisCheck.setOnCheckedChangeListener { _, isChecked ->
                 showTennis = isChecked
-                adapter.applyFilter(showTennis, showBasketball)
+                applyAllFilters()
             }
             basketballCheck.setOnCheckedChangeListener { _, isChecked ->
                 showBasketball = isChecked
-                adapter.applyFilter(showTennis, showBasketball)
+                applyAllFilters()
+            }
+            //  Distance slider logic
+            val distanceSlider = popupView.findViewById<com.google.android.material.slider.Slider>(R.id.distance_slider)
+            val distanceValue = popupView.findViewById<android.widget.TextView>(R.id.distance_value)
+            // Set initial slider position
+            val initialIndex = distanceIntervals.indexOf(selectedDistanceKm)
+            distanceSlider.value = if (initialIndex >= 0) initialIndex.toFloat() else 0f
+            distanceValue.text = "${distanceIntervals[distanceSlider.value.toInt()]} km"
+            distanceSlider.addOnChangeListener { _, value, _ ->
+                selectedDistanceKm = distanceIntervals[value.toInt()]
+                distanceValue.text = "${selectedDistanceKm} km"
+                applyAllFilters()
             }
             popupWindow.showAsDropDown(binding.filterButton, 0, 0)
         }
     }
 
-    fun updateUserLocation(location: Location) {
-        val lastLocation = lastUserLocation
-        val shouldUpdate = lastLocation == null || location.distanceTo(lastLocation) > locationUpdateThresholdMeters
-        if (shouldUpdate) {
-            adapter.location = location
-            lastUserLocation = location
-            val courts = adapter.getFullList() // get current courts from adapter
-            val sortedCourts = courts.sortedBy { court: Court ->
+    private fun applyAllFilters() {
+        val filtered = courts.filter { court ->
+            var typeMatch = false
+            when (court) {
+                is BasketballCourt -> typeMatch = showBasketball
+                is TennisCourt -> typeMatch = showTennis
+            }
+            val location = lastUserLocation
+            val geoPoint = court.base.geoPoint
+            val distanceMatch = if (location != null && geoPoint != null) {
+                val results = FloatArray(1)
+                Location.distanceBetween(
+                    location.latitude, location.longitude,
+                    geoPoint.latitude, geoPoint.longitude,
+                    results
+                )
+                results[0] <= selectedDistanceKm * 1000
+            } else {
+                true // If no location, show all
+            }
+            typeMatch && distanceMatch
+        }
+        val location = lastUserLocation
+        var sorted = filtered
+        if (location != null) {
+            //sort by shortest distance
+            sorted = filtered.sortedBy { court ->
                 val geoPoint = court.base.geoPoint
                 if (geoPoint != null) {
                     val results = FloatArray(1)
@@ -103,13 +143,24 @@ class HomeFragment : Fragment() {
                         geoPoint.latitude, geoPoint.longitude,
                         results
                     )
+                    //return distance
                     results[0]
                 } else {
-                    Float.MAX_VALUE // If no location, put at end
+                    //return max distance because no location data
+                    Float.MAX_VALUE
                 }
             }
-            adapter.setItems(sortedCourts)
-            adapter.applyFilter(showTennis, showBasketball)
+        }
+        adapter.setItems(sorted)
+    }
+
+    fun updateUserLocation(location: Location) {
+        val lastLocation = lastUserLocation
+        val shouldUpdate = lastLocation == null || location.distanceTo(lastLocation) > locationUpdateThresholdMeters
+        if (shouldUpdate) {
+            adapter.location = location
+            lastUserLocation = location
+            applyAllFilters()
         }
     }
 }
