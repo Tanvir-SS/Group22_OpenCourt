@@ -6,6 +6,7 @@ import com.example.group22_opencourt.BuildConfig
 import com.example.group22_opencourt.model.Court
 import com.example.group22_opencourt.model.TennisCourt
 import com.example.group22_opencourt.model.BasketballCourt
+import com.example.group22_opencourt.model.FirestoreDocumentLiveData
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.*
 
@@ -93,7 +94,10 @@ class CourtRepository private constructor() {
         }
     }
 
-
+    /** Get LiveData for a single court document by ID */
+    fun getCourtLiveData(id: String): FirestoreDocumentLiveData<Court?> {
+        return FirestoreDocumentLiveData(courtsCollection.document(id))
+    }
 
     companion object {
         val instance: CourtRepository by lazy { CourtRepository() }
@@ -109,6 +113,24 @@ class CourtRepository private constructor() {
                         "&key=${BuildConfig.MAPS_API_KEY}"
             Glide.with(imageView.context)
                 .load(photoUrl)
+                .into(imageView)
+        }
+
+        fun loadMapPhoto(court : Court, imageView : ImageView) {
+            val geoPoint = court.base.geoPoint ?: return
+            val lat = geoPoint.latitude
+            val lng = geoPoint.longitude
+
+            val mapUrl =
+                "https://maps.googleapis.com/maps/api/staticmap" +
+                        "?center=$lat,$lng" +
+                        "&zoom=16" +
+                        "&size=600x400" +
+                        "&markers=color:red%7C$lat,$lng" +
+                        "&key=${BuildConfig.MAPS_API_KEY}"
+
+            Glide.with(imageView.context)
+                .load(mapUrl)
                 .into(imageView)
         }
     }

@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.widget.ViewPager2
 import com.example.group22_opencourt.databinding.ActivityMainBinding
+import com.example.group22_opencourt.ui.detail.CourtDetailFragment
 import com.example.group22_opencourt.ui.main.AddCourtFragment
 import com.example.group22_opencourt.ui.main.HomeFragment
 import com.example.group22_opencourt.ui.main.MainPagerAdapter
@@ -43,7 +44,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
         fragments.add(homeFragment)
         fragments.add(MapFragment())
         fragments.add(AddCourtFragment())
-        fragments.add(SettingsFragment())
+        fragments.add(CourtDetailFragment())
 
         val pagerAdapter = MainPagerAdapter(this, fragments)
         binding.viewPager.adapter = pagerAdapter
