@@ -73,6 +73,9 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation("androidx.fragment:fragment-ktx:1.7.1")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.8.3")
+    implementation("androidx.navigation:navigation-ui-ktx:2.8.3")
 
     implementation(libs.play.services.maps)
 
@@ -80,4 +83,6 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
 
     implementation("com.github.bumptech.glide:glide:5.0.5")
+
+
 }

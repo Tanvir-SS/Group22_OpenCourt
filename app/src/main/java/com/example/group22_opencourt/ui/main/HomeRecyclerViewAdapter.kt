@@ -24,12 +24,12 @@ import java.util.Locale
 import kotlin.collections.get
 
 class HomeRecyclerViewAdapter(
-    private var courtList: List<Court>, private var lifecycleScope: CoroutineScope
-) : RecyclerView.Adapter<HomeRecyclerViewAdapter.ViewHolder>() {
+    private var courtList: List<Court>, private var lifecycleScope: CoroutineScope, private val onItemClick: ((Court) -> Unit)? = null)
+    : RecyclerView.Adapter<HomeRecyclerViewAdapter.ViewHolder>() {
 
     var location : Location? = null
 
-    class ViewHolder(binding: HomeFragmentItemBinding) : RecyclerView.ViewHolder(binding.root) {
+    class ViewHolder(val binding: HomeFragmentItemBinding) : RecyclerView.ViewHolder(binding.root) {
         val nameView: TextView = binding.courtNameText
         val cityView: TextView = binding.courtCityText
         val verticalBar : View = binding.verticalColorBar
@@ -38,6 +38,7 @@ class HomeRecyclerViewAdapter(
         val distanceView : TextView = binding.courtDistanceText
 
         val availabilityView : TextView = binding.availableCourtsText
+
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -53,6 +54,9 @@ class HomeRecyclerViewAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val court = courtList[position]
         var nameStr = ""
+        holder.binding.root.setOnClickListener {
+            onItemClick?.invoke(court)
+        }
         holder.nameView.text = court.base.name
 //        holder.cityView.text = court.base.city
         holder.addressView.text = court.base.address

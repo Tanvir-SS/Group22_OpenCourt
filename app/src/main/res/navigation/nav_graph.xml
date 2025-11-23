@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.group22_opencourt.ui.main.HomeFragment"
+        tools:layout="@layout/fragment_home" >
+        <action
+            android:id="@+id/action_homeFragment_to_courtDetailFragment"
+            app:destination="@id/courtDetailFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/mapFragment"
+        android:name="com.example.group22_opencourt.ui.main.MapFragment"
+        android:label="MapFragment" />
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.group22_opencourt.ui.main.SettingsFragment"
+        android:label="fragment_settings"
+        tools:layout="@layout/fragment_settings" />
+    <fragment
+        android:id="@+id/addCourtFragment"
+        android:name="com.example.group22_opencourt.ui.main.AddCourtFragment"
+        android:label="fragment_add_court"
+        tools:layout="@layout/fragment_add_court" />
+    <fragment
+        android:id="@+id/courtDetailFragment"
+        android:name="com.example.group22_opencourt.ui.detail.CourtDetailFragment"
+        android:label="CourtDetailFragment"/>
+
+
+</navigation>

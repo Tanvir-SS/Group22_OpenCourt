@@ -7,20 +7,16 @@ import android.location.LocationManager
 import android.location.LocationListener
 import android.os.Build
 import android.os.Bundle
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.viewpager2.widget.ViewPager2
+import androidx.navigation.NavController
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.setupWithNavController
 import com.example.group22_opencourt.databinding.ActivityMainBinding
-import com.example.group22_opencourt.ui.detail.CourtDetailFragment
-import com.example.group22_opencourt.ui.main.AddCourtFragment
-import com.example.group22_opencourt.ui.main.HomeFragment
-import com.example.group22_opencourt.ui.main.MainPagerAdapter
-import com.example.group22_opencourt.ui.main.MapFragment
-import com.example.group22_opencourt.ui.main.SettingsFragment
-import com.example.group22_opencourt.ui.main.SimpleTextFragment
 
 
 class MainActivity : AppCompatActivity(), LocationListener {
@@ -28,9 +24,8 @@ class MainActivity : AppCompatActivity(), LocationListener {
     private lateinit var binding: ActivityMainBinding
     private val PERMISSION_REQUEST_CODE = 0
     private lateinit var locationManager: LocationManager
-    private val mapFragment = MapFragment()
-    private val homeFragment = HomeFragment()
     var currentLocation: Location? = null
+    private lateinit var navController: NavController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,43 +35,24 @@ class MainActivity : AppCompatActivity(), LocationListener {
 
         checkPermissions()
 
-        val fragments = ArrayList<Fragment>()
-        fragments.add(homeFragment)
-        fragments.add(MapFragment())
-        fragments.add(AddCourtFragment())
-        fragments.add(CourtDetailFragment())
+//        // Set up NavController from NavHostFragment
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        navController = navHostFragment.navController
+//
+        // Set up bottom navigation with NavController
+        binding.bottomNav.setupWithNavController(navController)
 
-        val pagerAdapter = MainPagerAdapter(this, fragments)
-        binding.viewPager.adapter = pagerAdapter
-        binding.viewPager.isUserInputEnabled = false
-
-        // Bottom nav buttons to switch to correct fragment
-        binding.bottomNav.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_home -> binding.viewPager.setCurrentItem(0, true)
-                R.id.nav_map -> binding.viewPager.setCurrentItem(1, true)
-                R.id.nav_add_court -> binding.viewPager.setCurrentItem(2, true)
-                R.id.nav_settings -> binding.viewPager.setCurrentItem(3, true)
+        // Update toolbar title on destination change
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            binding.toolbar.title = when (destination.id) {
+                R.id.homeFragment -> "Home"
+                R.id.mapFragment -> "Map"
+                R.id.addCourtFragment -> "Add Court"
+                R.id.settingsFragment -> "Settings"
+                R.id.courtDetailFragment -> "Court Detail"
+                else -> "OpenCourt"
             }
-            true //handled change
         }
-
-        // sync bottom nav button selected to current fragment
-        //method requires an object instance
-        binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-            override fun onPageSelected(position: Int) {
-                super.onPageSelected(position)
-                var itemId = 0
-                when (position) {
-                    0 -> {itemId = R.id.nav_home; binding.toolbar.title = "Home"}
-                    1 -> {itemId = R.id.nav_map; binding.toolbar.title = "Map"}
-                    2 -> {itemId = R.id.nav_add_court; binding.toolbar.title = "Add Court"}
-                    3 -> {itemId = R.id.nav_settings; binding.toolbar.title = "Settings"}
-                    else -> R.id.nav_home
-                }
-                binding.bottomNav.selectedItemId = itemId
-            }
-        })
     }
 
     // Location Stuff
@@ -102,12 +78,12 @@ class MainActivity : AppCompatActivity(), LocationListener {
 
     override fun onLocationChanged(location: Location) {
         currentLocation = location
-        // send update to map fragment
-        if (mapFragment.isAdded) {
-            mapFragment.updateUserLocation(location)
-        }
-        if (homeFragment.isAdded) {
-            homeFragment.updateUserLocation(location)
+        // Get current fragment from NavHostFragment and update location if applicable
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+        val currentFragment = navHostFragment?.childFragmentManager?.primaryNavigationFragment
+        when (currentFragment) {
+            is com.example.group22_opencourt.ui.main.MapFragment -> currentFragment.updateUserLocation(location)
+            is com.example.group22_opencourt.ui.main.HomeFragment -> currentFragment.updateUserLocation(location)
         }
     }
 
@@ -135,5 +111,10 @@ class MainActivity : AppCompatActivity(), LocationListener {
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) initLocationManager()
         }
+    }
+    fun showCourtDetail(documentId: String) {
+        // Example navigation to CourtDetailFragment with argument
+        val bundle = Bundle().apply { putString("documentId", documentId) }
+        navController.navigate(R.id.courtDetailFragment, bundle)
     }
 }

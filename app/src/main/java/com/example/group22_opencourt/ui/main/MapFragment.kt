@@ -33,6 +33,7 @@ class MapFragment : Fragment(), OnMapReadyCallback,
     private var mapCentered = false
     private var mapFragment: SupportMapFragment? = null
 
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -126,6 +127,9 @@ class MapFragment : Fragment(), OnMapReadyCallback,
     }
 
     fun updateUserLocation(location: Location) {
+        if (!this::map.isInitialized) {
+            return
+        }
         val latLng = LatLng(location.latitude, location.longitude)
         map.clear()
         map.addMarker(MarkerOptions().position(latLng).title("You are here"))

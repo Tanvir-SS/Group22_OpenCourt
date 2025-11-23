@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -28,7 +29,7 @@ import kotlinx.coroutines.withContext
 class CourtDetailFragment : Fragment() {
     private lateinit var viewModel: CourtDetailViewModel
     private lateinit var courtsRecyclerView : RecyclerView
-
+//    private val args: CourtDetailFragmentArgs by navArgs()
     private lateinit var adapter: CourtStatusAdapter
 
     override fun onCreateView(
@@ -93,6 +94,13 @@ class CourtDetailFragment : Fragment() {
         }
     }
 
+    companion object {
+        fun newInstance(documentId: String): CourtDetailFragment {
+            val fragment = CourtDetailFragment()
+            fragment.arguments = Bundle().apply { putString("document_id", documentId) }
+            return fragment
+        }
+    }
 }
 
 

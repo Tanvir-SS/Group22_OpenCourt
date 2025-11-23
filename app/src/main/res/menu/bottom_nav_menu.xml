@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/nav_home"
+        android:id="@+id/homeFragment"
         android:icon="@drawable/selector_bottom_nav_home"
         android:title="@string/tab_home" />
     <item
-        android:id="@+id/nav_map"
+        android:id="@+id/mapFragment"
         android:icon="@drawable/selector_bottom_nav_map"
         android:title="@string/map" />
     <item
-        android:id="@+id/nav_add_court"
+        android:id="@+id/addCourtFragment"
         android:icon="@drawable/selector_bottom_nav_add"
         android:title="@string/new_court" />
     <item
-        android:id="@+id/nav_settings"
+        android:id="@+id/settingsFragment"
         android:icon="@drawable/selector_bottom_nav_settings"
         android:title="@string/settings" />
 </menu>

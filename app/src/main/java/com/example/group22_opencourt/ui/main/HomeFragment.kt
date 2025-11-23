@@ -10,8 +10,10 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.group22_opencourt.MainActivity
 import com.example.group22_opencourt.R
 import com.example.group22_opencourt.databinding.FragmentHomeBinding
 import com.example.group22_opencourt.model.BasketballCourt
@@ -42,6 +44,8 @@ class HomeFragment : Fragment() {
     // New filter state variable
     private var filterAvailableOnly = false // Track available courts only filter
 
+
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -57,8 +61,10 @@ class HomeFragment : Fragment() {
             DividerItemDecoration.VERTICAL
         )
         binding.recyclerView.addItemDecoration(dividerItemDecoration)
-
-        adapter = HomeRecyclerViewAdapter(courts, viewLifecycleOwner.lifecycleScope)
+        lastUserLocation = null
+        adapter = HomeRecyclerViewAdapter(courts, viewLifecycleOwner.lifecycleScope) {
+            onCourtSelected(it.base.id)
+        }
         binding.recyclerView.adapter = adapter
 
         // Observe courts from ViewModel and update adapter
@@ -175,7 +181,10 @@ class HomeFragment : Fragment() {
 
     fun updateUserLocation(location: Location) {
         val lastLocation = lastUserLocation
-        val shouldUpdate = lastLocation == null || location.distanceTo(lastLocation) > locationUpdateThresholdMeters
+        var shouldUpdate = lastLocation == null || location.distanceTo(lastLocation) > locationUpdateThresholdMeters
+        if (!this::binding.isInitialized || !this::adapter.isInitialized) {
+            return
+        }
         if (shouldUpdate) {
             adapter.location = location
             lastUserLocation = location
@@ -204,5 +213,13 @@ class HomeFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun onCourtSelected(documentId: String) {
+//        val action = HomeFragmentDirections.actionHomeFragmentToCourtDetailFragment(documentId)
+//        findNavController().navigate(action)
+
+
+        (activity as? MainActivity)?.showCourtDetail(documentId)
     }
 }
