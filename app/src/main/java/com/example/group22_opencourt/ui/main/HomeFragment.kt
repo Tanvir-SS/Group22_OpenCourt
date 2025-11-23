@@ -39,6 +39,9 @@ class HomeFragment : Fragment() {
 
     private var courts = emptyList<Court>()
 
+    // New filter state variable
+    private var filterAvailableOnly = false // Track available courts only filter
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -83,8 +86,10 @@ class HomeFragment : Fragment() {
             val tennisCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(
                 R.id.checkbox_tennis)
             val basketballCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.checkbox_basketball)
+            val availableCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.checkbox_available)
             tennisCheck.isChecked = showTennis
             basketballCheck.isChecked = showBasketball
+            availableCheck.isChecked = filterAvailableOnly
             // Checkbox listeners
             tennisCheck.setOnCheckedChangeListener { _, isChecked ->
                 showTennis = isChecked
@@ -92,6 +97,10 @@ class HomeFragment : Fragment() {
             }
             basketballCheck.setOnCheckedChangeListener { _, isChecked ->
                 showBasketball = isChecked
+                applyAllFilters()
+            }
+            availableCheck.setOnCheckedChangeListener { _, isChecked ->
+                filterAvailableOnly = isChecked
                 applyAllFilters()
             }
             //  Distance slider logic
@@ -106,7 +115,8 @@ class HomeFragment : Fragment() {
                 distanceValue.text = "${selectedDistanceKm} km"
                 applyAllFilters()
             }
-            popupWindow.showAsDropDown(binding.filterButton, 0, 0)
+            val xOffset = binding.filterButton.width - popupWidth
+            popupWindow.showAsDropDown(binding.filterButton, xOffset, 0)
         }
     }
 
@@ -130,7 +140,11 @@ class HomeFragment : Fragment() {
             } else {
                 true // If no location, show all
             }
-            typeMatch && distanceMatch
+            var availableMatch = true
+            if (filterAvailableOnly && court.base.courtsAvailable == 0) {
+                availableMatch = false
+            }
+            typeMatch && distanceMatch && availableMatch
         }
         val location = lastUserLocation
         var sorted = filtered
@@ -168,7 +182,7 @@ class HomeFragment : Fragment() {
             applyAllFilters() { sorted ->
                 //the apply filters only updates position and reuses viewHolders if on screen
                 //apply this to update the any detail on the texts in the viewholders
-                for (i in 0 until binding.recyclerView.childCount) {
+                for (i in 0 until minOf(binding.recyclerView.childCount, sorted.size)) {
                     val court = sorted[i]
                     val child = binding.recyclerView.getChildAt(i)
                     val holder = binding.recyclerView.getChildViewHolder(child) as ViewHolder

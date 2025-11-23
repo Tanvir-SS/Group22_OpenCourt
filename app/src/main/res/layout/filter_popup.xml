@@ -28,6 +28,14 @@
         android:textColor="@color/white"
         app:buttonTint="@color/white" />
 
+    <!-- Thin white bar before slider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/white"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp" />
+
     <!-- Distance slider label -->
     <TextView
         android:id="@+id/distance_label"
@@ -35,8 +43,7 @@
         android:layout_height="wrap_content"
         android:text="Distance within"
         android:textColor="@color/white"
-        android:textSize="16sp"
-        android:layout_marginTop="12dp" />
+        android:layout_marginTop="4dp" />
 
     <!-- Distance slider -->
     <com.google.android.material.slider.Slider
@@ -50,8 +57,7 @@
         app:thumbColor="@color/white"
         app:haloColor="@color/white"
         app:tickColor="@color/white"
-        app:labelBehavior="gone"
-        android:layout_marginTop="8dp" />
+        app:labelBehavior="gone" />
 
     <!-- Selected distance display -->
     <TextView
@@ -61,7 +67,26 @@
         android:text="1 km"
         android:textColor="@color/white"
         android:textSize="14sp"
-        android:layout_marginTop="4dp"
         android:layout_gravity="center_horizontal" />
+
+    <!-- Thin white bar after slider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/white"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Available courts only checkbox -->
+    <com.google.android.material.checkbox.MaterialCheckBox
+        android:id="@+id/checkbox_available"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Available courts only"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:textColor="@color/white"
+        app:buttonTint="@color/white"
+        android:layout_marginTop="8dp" />
 
 </LinearLayout>
