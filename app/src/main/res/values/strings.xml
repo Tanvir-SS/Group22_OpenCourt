@@ -8,6 +8,8 @@
     <string name="map">Map</string>
     <string name="new_court">New Court</string>
     <string name="settings">Settings</string>
+
+    <string name="court_availability">Available\nCourts: %1$d/%2$d</string>
     <!--AddCourtFragment-->
     <string name="court_name">Court Name</string>
     <string name="court_name_hint">SFU Courts</string>

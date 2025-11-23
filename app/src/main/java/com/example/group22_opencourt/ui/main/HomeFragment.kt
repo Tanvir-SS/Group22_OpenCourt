@@ -2,6 +2,7 @@ package com.example.group22_opencourt.ui.main
 
 import android.location.Location
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,9 +17,11 @@ import com.example.group22_opencourt.databinding.FragmentHomeBinding
 import com.example.group22_opencourt.model.BasketballCourt
 import com.example.group22_opencourt.model.Court
 import com.example.group22_opencourt.model.TennisCourt
+import com.example.group22_opencourt.ui.main.HomeRecyclerViewAdapter.ViewHolder
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import java.util.Locale
 
 class HomeFragment : Fragment() {
 
@@ -57,7 +60,6 @@ class HomeFragment : Fragment() {
 
         // Observe courts from ViewModel and update adapter
         viewModel.courts.observe(viewLifecycleOwner) { courts ->
-            adapter.setItems(courts)
             this@HomeFragment.courts = courts
             applyAllFilters()
         }
@@ -108,7 +110,7 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun applyAllFilters() {
+    private fun applyAllFilters(onSuccess: ((List<Court>) -> Unit)? = null) {
         val filtered = courts.filter { court ->
             var typeMatch = false
             when (court) {
@@ -151,7 +153,10 @@ class HomeFragment : Fragment() {
                 }
             }
         }
-        adapter.setItems(sorted)
+        adapter.setItems(sorted) {
+            binding.recyclerView.scrollToPosition(0)
+            onSuccess?.invoke(sorted)
+        }
     }
 
     fun updateUserLocation(location: Location) {
@@ -160,7 +165,30 @@ class HomeFragment : Fragment() {
         if (shouldUpdate) {
             adapter.location = location
             lastUserLocation = location
-            applyAllFilters()
+            applyAllFilters() { sorted ->
+                //the apply filters only updates position and reuses viewHolders if on screen
+                //apply this to update the any detail on the texts in the viewholders
+                for (i in 0 until binding.recyclerView.childCount) {
+                    val court = sorted[i]
+                    val child = binding.recyclerView.getChildAt(i)
+                    val holder = binding.recyclerView.getChildViewHolder(child) as ViewHolder
+                    val geoPoint = court.base.geoPoint
+                    val location = lastUserLocation
+                    if (geoPoint != null && location != null) {
+                        val results = FloatArray(1)
+                        Location.distanceBetween(
+                            location.latitude, location.longitude,
+                            geoPoint.latitude, geoPoint.longitude,
+                            results
+                        )
+                        val distanceKm = results[0] / 1000f
+                        holder.distanceView.text = String.format(Locale.getDefault(), "%.1f km", distanceKm)
+                    } else {
+                        Log.d("debug", court.toString())
+                        holder.distanceView.text = "-.- km"
+                    }
+                }
+            }
         }
     }
 }

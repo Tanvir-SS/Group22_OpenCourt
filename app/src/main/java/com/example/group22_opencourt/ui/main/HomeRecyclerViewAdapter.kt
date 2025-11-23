@@ -1,10 +1,13 @@
 package com.example.group22_opencourt.ui.main
 
 import android.location.Location
+import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.example.group22_opencourt.R
@@ -29,9 +32,12 @@ class HomeRecyclerViewAdapter(
     class ViewHolder(binding: HomeFragmentItemBinding) : RecyclerView.ViewHolder(binding.root) {
         val nameView: TextView = binding.courtNameText
         val cityView: TextView = binding.courtCityText
+        val verticalBar : View = binding.verticalColorBar
         val addressView : TextView = binding.courtAddressText
         val imageView: ImageView = binding.courtImageView
         val distanceView : TextView = binding.courtDistanceText
+
+        val availabilityView : TextView = binding.availableCourtsText
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -46,9 +52,24 @@ class HomeRecyclerViewAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val court = courtList[position]
+        var nameStr = ""
         holder.nameView.text = court.base.name
 //        holder.cityView.text = court.base.city
         holder.addressView.text = court.base.address
+        when (court) {
+            is BasketballCourt -> nameStr = "Basketball - "
+            is TennisCourt -> nameStr = "Tennis - "
+        }
+        if (court.base.courtsAvailable > 0){
+            holder.verticalBar.setBackgroundColor(ContextCompat.getColor(holder.itemView.context, R.color.oc_available))
+        } else {
+            holder.verticalBar.setBackgroundColor(ContextCompat.getColor(holder.itemView.context, R.color.oc_unavailable))
+        }
+        holder.nameView.text = nameStr + court.base.name
+        holder.availabilityView.text = holder.itemView.context.getString(
+            R.string.court_availability,
+  court.base.courtsAvailable,
+                court.base.totalCourts)
         val geoPoint = court.base.geoPoint
         val userLocation = location // fix smart cast issue
         if (geoPoint != null && userLocation != null) {
@@ -61,7 +82,7 @@ class HomeRecyclerViewAdapter(
             val distanceKm = results[0] / 1000f
             holder.distanceView.text = String.format(Locale.getDefault(), "%.1f km", distanceKm)
         } else {
-            holder.distanceView.text = "-"
+            holder.distanceView.text = "-.- km"
         }
 
 
@@ -86,7 +107,7 @@ class HomeRecyclerViewAdapter(
         return courtList.size
     }
 
-    fun setItems(newList: List<Court>) {
+    fun setItems(newList: List<Court>, onSuccess: (() -> Unit)? = null) {
         val oldList = courtList // Make a copy for thread safety
         lifecycleScope.launch(Dispatchers.Default) {
             val diffCallback = object : DiffUtil.Callback() {
@@ -107,6 +128,7 @@ class HomeRecyclerViewAdapter(
             withContext(Dispatchers.Main) {
                 courtList = newList
                 diffResult.dispatchUpdatesTo(this@HomeRecyclerViewAdapter)
+                onSuccess?.invoke()
             }
         }
     }
