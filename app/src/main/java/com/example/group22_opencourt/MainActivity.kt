@@ -44,6 +44,12 @@ class MainActivity : AppCompatActivity(), LocationListener {
         binding.bottomNav.setupWithNavController(navController)
 
         binding.bottomNav.setOnItemSelectedListener { item ->
+            val currentDestId = navController.currentDestination?.id
+
+            // If the tapped tab is already selected, do nothing
+            if (item.itemId == currentDestId) {
+                return@setOnItemSelectedListener true
+            }
             when (item.itemId) {
                 R.id.homeFragment -> {
                     // Always go back to the base firstFragment, clearing anything above it

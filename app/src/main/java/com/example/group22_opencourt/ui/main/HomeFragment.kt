@@ -51,6 +51,7 @@ class HomeFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         binding = FragmentHomeBinding.inflate(inflater, container, false)
+        Log.d("debug", "onCreateViewCalled")
         return binding.root
     }
 
@@ -134,6 +135,9 @@ class HomeFragment : Fragment() {
                 is TennisCourt -> typeMatch = showTennis
             }
             val location = lastUserLocation
+            if (location == null) {
+                return
+            }
             val geoPoint = court.base.geoPoint
             val distanceMatch = if (location != null && geoPoint != null) {
                 val results = FloatArray(1)
@@ -174,7 +178,6 @@ class HomeFragment : Fragment() {
             }
         }
         adapter.setItems(sorted) {
-            binding.recyclerView.scrollToPosition(0)
             onSuccess?.invoke(sorted)
         }
     }
