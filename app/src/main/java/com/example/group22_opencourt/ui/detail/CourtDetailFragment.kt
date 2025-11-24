@@ -7,14 +7,17 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.group22_opencourt.MainActivity
 import com.example.group22_opencourt.R
 import com.example.group22_opencourt.model.TennisCourt
 import com.example.group22_opencourt.model.BasketballCourt
@@ -32,6 +35,8 @@ class CourtDetailFragment : Fragment() {
 //    private val args: CourtDetailFragmentArgs by navArgs()
     private lateinit var adapter: CourtStatusAdapter
 
+    private var documentId = ""
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -39,7 +44,7 @@ class CourtDetailFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_court_detail, container, false)
         // Get document ID from arguments
-        val documentId = arguments?.getString("document_id") ?: "1EYahQs7n7ZUF6qPPAjT"
+        documentId = arguments?.getString("document_id") ?: "1EYahQs7n7ZUF6qPPAjT"
         // Set up ViewModel
         viewModel = ViewModelProvider(this, CourtDetailViewModelFactory(documentId)).get(CourtDetailViewModel::class.java)
         courtsRecyclerView = view.findViewById<RecyclerView>(R.id.courts_recycler_view)
@@ -91,6 +96,25 @@ class CourtDetailFragment : Fragment() {
                 // Update map image
                  CourtRepository.loadMapPhoto(court, view.findViewById(R.id.map_image))
             }
+        }
+        val editCourtButton : Button = view.findViewById(R.id.edit_court_button)
+        editCourtButton.setOnClickListener {
+            val args = Bundle().apply {
+                putString("document_id", documentId)
+            }
+            findNavController().navigate(R.id.action_courtDetailFragment_to_editCourtFragment, args)
+        }
+
+        val checkInButton : Button = view.findViewById(R.id.check_in_button)
+        checkInButton.setOnClickListener {
+            val args = Bundle().apply {
+                putString("document_id", documentId)
+            }
+            findNavController().navigate(R.id.action_courtDetailFragment_to_checkInFragment, args)
+        }
+        val activity = requireActivity()
+        if (activity is MainActivity) {
+            activity.showBackButton()
         }
     }
 

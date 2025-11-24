@@ -18,6 +18,7 @@ import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import androidx.lifecycle.MutableLiveData
+import androidx.navigation.findNavController
 
 import com.example.group22_opencourt.databinding.ActivityMainBinding
 
@@ -41,7 +42,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
 
         checkPermissions()
 
-//        // Set up NavController from NavHostFragment
+        //        // Set up NavController from NavHostFragment
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         navController = navHostFragment.navController
 //
@@ -55,13 +56,22 @@ class MainActivity : AppCompatActivity(), LocationListener {
             if (item.itemId == currentDestId) {
                 return@setOnItemSelectedListener true
             }
+            hideBackButton()
             when (item.itemId) {
                 R.id.homeFragment -> {
                     // Always go back to the base firstFragment, clearing anything above it
                     val options = NavOptions.Builder()
                         .setPopUpTo(R.id.homeFragment, inclusive = false)
                         .build()
-                    navController.navigate(R.id.homeFragment, null, options)
+                    var args1 : Bundle? = null
+                    val location = currentLocation
+                    if (location != null) {
+                        args1 = Bundle().apply {
+                            putDouble("latitude", location.latitude)
+                            putDouble("longitude", location.longitude)
+                        }
+                    }
+                    navController.navigate(R.id.homeFragment, args1, options)
                     true
                 }
                 R.id.mapFragment -> {
@@ -89,6 +99,8 @@ class MainActivity : AppCompatActivity(), LocationListener {
                 R.id.addCourtFragment -> "Add Court"
                 R.id.settingsFragment -> "Settings"
                 R.id.courtDetailFragment -> "Court Detail"
+                R.id.editCourtFragment -> "Edit Court"
+                R.id.checkInFragment -> "Check In"
                 else -> "OpenCourt"
             }
         }
@@ -150,5 +162,19 @@ class MainActivity : AppCompatActivity(), LocationListener {
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) initLocationManager()
         }
+    }
+
+    fun showBackButton() {
+        binding.toolbar.navigationIcon = ContextCompat.getDrawable(this, R.drawable.ic_arrow_back)
+        binding.toolbar.setNavigationOnClickListener {
+            navController.navigateUp()
+            if (navController.currentDestination?.id != R.id.courtDetailFragment) {
+                hideBackButton()
+            }
+        }
+    }
+
+    fun hideBackButton() {
+        binding.toolbar.navigationIcon = null
     }
 }

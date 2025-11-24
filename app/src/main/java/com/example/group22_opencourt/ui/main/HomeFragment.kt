@@ -63,6 +63,14 @@ class HomeFragment : Fragment() {
         )
         binding.recyclerView.addItemDecoration(dividerItemDecoration)
         lastUserLocation = null
+        val latitude1 = arguments?.getDouble("latitude") ?: 0.0
+        val longitude1 = arguments?.getDouble("latitude") ?: 0.0
+        if (latitude1 != 0.0) {
+            lastUserLocation = Location("manual").apply {
+                latitude = latitude1
+                longitude = longitude1
+            }
+        }
         adapter = HomeRecyclerViewAdapter(courts, viewLifecycleOwner.lifecycleScope) {
             onCourtSelected(it.base.id)
         }

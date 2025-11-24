@@ -12,7 +12,12 @@
         android:background="?attr/colorSurface"
         android:titleTextColor="@color/black"
         app:layout_scrollFlags="scroll|enterAlways"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:contentInsetStartWithNavigation="0dp"
+        app:title="Home"
+        app:layout_constraintTop_toTopOf="parent">
+
+
+    </com.google.android.material.appbar.MaterialToolbar>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNav"
