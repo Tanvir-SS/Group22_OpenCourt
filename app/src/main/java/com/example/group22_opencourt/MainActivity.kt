@@ -17,6 +17,8 @@ import androidx.navigation.NavController
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import androidx.lifecycle.MutableLiveData
+
 import com.example.group22_opencourt.databinding.ActivityMainBinding
 
 
@@ -27,6 +29,9 @@ class MainActivity : AppCompatActivity(), LocationListener {
     private lateinit var locationManager: LocationManager
     var currentLocation: Location? = null
     private lateinit var navController: NavController
+
+    // LiveData to expose location updates
+    val currentLocationLiveData = MutableLiveData<Location>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -116,9 +121,9 @@ class MainActivity : AppCompatActivity(), LocationListener {
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
         val currentFragment = navHostFragment?.childFragmentManager?.primaryNavigationFragment
         when (currentFragment) {
-            is com.example.group22_opencourt.ui.main.MapFragment -> currentFragment.updateUserLocation(location)
             is com.example.group22_opencourt.ui.main.HomeFragment -> currentFragment.updateUserLocation(location)
         }
+        currentLocationLiveData.postValue(location) // Post the updated location
     }
 
     // Remove location updates when the activity is destroyed

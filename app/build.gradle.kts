@@ -21,6 +21,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
         android.buildFeatures.buildConfig = true
         // Access the key from local.properties (Kotlin DSL)
         val properties = Properties().apply {
@@ -30,6 +31,7 @@ android {
 
         // Expose to BuildConfig
         buildConfigField("String", "MAPS_API_KEY", "\"$apiKey\"")
+
     }
 
     buildTypes {
@@ -50,6 +52,7 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 
@@ -82,9 +85,13 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
     implementation("com.google.firebase:firebase-firestore")
 
+
     implementation("com.github.bumptech.glide:glide:5.0.5")
 
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
+
+
+    implementation("com.google.android.libraries.places:places:3.5.0")
 
 }
