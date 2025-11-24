@@ -40,7 +40,9 @@ import androidx.fragment.app.activityViewModels
 import com.google.android.gms.maps.model.Marker
 import android.widget.ImageView
 import android.widget.TextView
+import com.example.group22_opencourt.model.BasketballCourt
 import com.example.group22_opencourt.model.Court
+import com.example.group22_opencourt.model.TennisCourt
 
 
 class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButtonClickListener {
@@ -53,9 +55,11 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
     private var hasCenteredOnUser = false
     private val viewModel: HomeViewModel by activityViewModels()
 
+    // Filter state
+    private var showTennis = true
+    private var showBasketball = true
 
     // binding setup
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -80,6 +84,22 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
             Places.initialize(requireContext(), BuildConfig.MAPS_API_KEY)
         }
         placesClient= Places.createClient(requireContext())
+
+        // Set initial checkbox states
+        val tennisCheck = binding.mapCheckboxTennis
+        val basketballCheck = binding.mapCheckboxBasketball
+        tennisCheck.isChecked = showTennis
+        basketballCheck.isChecked = showBasketball
+
+        // Checkbox listeners
+        tennisCheck.setOnCheckedChangeListener { _, isChecked ->
+            showTennis = isChecked
+            observeCourts()
+        }
+        basketballCheck.setOnCheckedChangeListener { _, isChecked ->
+            showBasketball = isChecked
+            observeCourts()
+        }
     }
 
     private fun setupMapTypeSpinner() {
@@ -199,7 +219,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
                                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
                         )
                         // move camera to location
-                        map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16f))
+                        map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
                         Toast.makeText(requireContext(), "Found: ${place.name}", Toast.LENGTH_SHORT).show()
                     }
                     // handle place details failure
@@ -219,19 +239,24 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
     private fun observeCourts() {
         // observe courts from ViewModel and add markers
         viewModel.courts.observe(viewLifecycleOwner) { courts ->
+            map.clear()
             for (court in courts) {
                 val geoPoint = court.base.geoPoint
                 if (geoPoint != null) {
                     // get court location and add marker
                     val latLng = LatLng(geoPoint.latitude, geoPoint.longitude)
-                    val marker = map.addMarker(
-                        MarkerOptions()
-                            .position(latLng)
-                            .title(court.base.name)
-                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
-                    )
-                    // set the court as marker tag for info window
-                    marker?.tag = court
+
+                    // Filter based on court type
+                    if ((court is TennisCourt && showTennis) || (court is BasketballCourt && showBasketball)) {
+                        val marker = map.addMarker(
+                            MarkerOptions()
+                                .position(latLng)
+                                .title(court.base.name)
+                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+                        )
+                        // set the court as marker tag for info window
+                        marker?.tag = court
+                    }
                 } else {
                     Log.w("MapFragment", "Court ${court.base.name} does not have a valid GeoPoint")
                 }
@@ -248,6 +273,8 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
         map.uiSettings.isZoomControlsEnabled = true
         map.uiSettings.isCompassEnabled = true
         map.isMyLocationEnabled = true
+
+        map.setPadding(0,250,0,0)
 
         // detect if user moved the map
         map.setOnCameraMoveStartedListener { reason ->
@@ -342,7 +369,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
     fun centerMapOnUser(location: Location) {
         // center map on user location
         val latLng = LatLng(location.latitude, location.longitude)
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16f))
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
     }
 
     private fun hideKeyboard() {
