@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.MutableLiveData
 import androidx.viewpager2.widget.ViewPager2
 import com.example.group22_opencourt.databinding.ActivityMainBinding
 import com.example.group22_opencourt.ui.main.AddCourtFragment
@@ -29,6 +30,9 @@ class MainActivity : AppCompatActivity(), LocationListener {
     private lateinit var locationManager: LocationManager
     private val mapFragment = MapFragment()
     var currentLocation: Location? = null
+
+    // LiveData to expose location updates
+    val currentLocationLiveData = MutableLiveData<Location>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -100,10 +104,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
 
     override fun onLocationChanged(location: Location) {
         currentLocation = location
-        // send update to map fragment
-        if (mapFragment.isAdded) {
-            mapFragment.updateUserLocation(location)
-        }
+        currentLocationLiveData.postValue(location) // Post the updated location
     }
 
     // Remove location updates when the activity is destroyed
