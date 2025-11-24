@@ -140,9 +140,4 @@ class MainActivity : AppCompatActivity(), LocationListener {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) initLocationManager()
         }
     }
-    fun showCourtDetail(documentId: String) {
-        // Example navigation to CourtDetailFragment with argument
-        val bundle = Bundle().apply { putString("documentId", documentId) }
-        navController.navigate(R.id.courtDetailFragment, bundle)
-    }
 }

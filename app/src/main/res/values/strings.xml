@@ -21,7 +21,7 @@
     <string name="num_courts_hint">4</string>
     <string name="amenities">Amenities</string>
     <string name="lights">Lights</string>
-    <string name="outdoor">Outdoor</string>
+    <string name="indoor">Indoor</string>
     <string name="washroom">Washroom</string>
     <string name="accessibility">Accessibility</string>
     <string name="apply">Apply</string>
@@ -49,4 +49,14 @@
         <item>Hybrid</item>
     </string-array>
 
+    <!-- Court Type Options -->
+    <string-array name="court_type_options">
+        <item>Tennis</item>
+        <item>Basketball</item>
+    </string-array>
+
+    <string name="tennis_options">Tennis Options</string>
+    <string name="basketball_options">Basketball Options</string>
+    <string name="practice_wall">Practice Wall</string>
+    <string name="nets">Nets</string>
 </resources>

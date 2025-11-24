@@ -7,20 +7,34 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import android.widget.CheckBox
+import android.widget.LinearLayout
+import android.widget.Spinner
+import android.widget.ArrayAdapter
+import android.widget.AdapterView
 import com.example.group22_opencourt.R
-
-
-
+import com.example.group22_opencourt.model.BasketballCourt
+import com.example.group22_opencourt.model.CourtBase
+import com.example.group22_opencourt.model.TennisCourt
 
 class AddCourtFragment : Fragment() {
     private lateinit var courtNameEditText: android.widget.EditText
     private lateinit var clearCourtName: android.widget.ImageView
-    private lateinit var courtTypeEditText: android.widget.EditText
-    private lateinit var clearCourtType: android.widget.ImageView
+    private lateinit var courtTypeSpinner: Spinner
     private lateinit var addressEditText: android.widget.EditText
     private lateinit var clearAddress: android.widget.ImageView
     private lateinit var numCourtsEditText: android.widget.EditText
     private lateinit var clearNumCourts: android.widget.ImageView
+
+    private lateinit var checkboxLights: CheckBox
+    private lateinit var checkboxIndoor: CheckBox
+    private lateinit var checkboxWashroom: CheckBox
+    private lateinit var checkboxAccessibility: CheckBox
+
+    private lateinit var layoutTennisAmenities: LinearLayout
+    private lateinit var layoutBasketballAmenities: LinearLayout
+    private lateinit var checkboxPracticeWall: CheckBox
+    private lateinit var checkboxNets: CheckBox
 
     private fun showKeyboard(editText: android.widget.EditText) {
         editText.requestFocus()
@@ -31,19 +45,58 @@ class AddCourtFragment : Fragment() {
     private fun initViews(view: View) {
         courtNameEditText = view.findViewById(R.id.editTextCourtName)
         clearCourtName = view.findViewById(R.id.clearCourtName)
-        courtTypeEditText = view.findViewById(R.id.editTextCourtType)
-        clearCourtType = view.findViewById(R.id.clearCourtType)
+        courtTypeSpinner = view.findViewById(R.id.spinnerCourtType)
         addressEditText = view.findViewById(R.id.editTextAddress)
         clearAddress = view.findViewById(R.id.clearAddress)
         numCourtsEditText = view.findViewById(R.id.editTextNumCourts)
         clearNumCourts = view.findViewById(R.id.clearNumCourts)
 
-        // Set focus and show keyboard when parent LinearLayout is clicked
+        checkboxLights = view.findViewById(R.id.checkboxLights)
+        checkboxIndoor = view.findViewById(R.id.checkboxIndoor)
+        checkboxWashroom = view.findViewById(R.id.checkboxWashroom)
+        checkboxAccessibility = view.findViewById(R.id.checkboxAccessibility)
+
+        layoutTennisAmenities = view.findViewById(R.id.layoutTennisAmenities)
+        layoutBasketballAmenities = view.findViewById(R.id.layoutBasketballAmenities)
+        checkboxPracticeWall = view.findViewById(R.id.checkboxPracticeWall)
+        checkboxNets = view.findViewById(R.id.checkboxNets)
+
+        // Set up spinner adapter explicitly (even with entries) to ensure control over items
+        ArrayAdapter.createFromResource(
+            requireContext(),
+            R.array.court_type_options,
+            android.R.layout.simple_spinner_item
+        ).also { adapter ->
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            courtTypeSpinner.adapter = adapter
+        }
+
+        courtTypeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                when (position) {
+                    0 -> { // Tennis
+                        layoutTennisAmenities.visibility = View.VISIBLE
+                        layoutBasketballAmenities.visibility = View.GONE
+                        checkboxNets.isChecked = false
+                    }
+                    1 -> { // Basketball
+                        layoutTennisAmenities.visibility = View.GONE
+                        layoutBasketballAmenities.visibility = View.VISIBLE
+                        checkboxPracticeWall.isChecked = false
+                    }
+                }
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>) {
+                // Default to tennis section visible
+                layoutTennisAmenities.visibility = View.VISIBLE
+                layoutBasketballAmenities.visibility = View.GONE
+            }
+        }
+
+        // Existing layout click listeners now only for text inputs
         view.findViewById<View>(R.id.layoutCourtName).setOnClickListener {
             showKeyboard(courtNameEditText)
-        }
-        view.findViewById<View>(R.id.layoutCourtType).setOnClickListener {
-            showKeyboard(courtTypeEditText)
         }
         view.findViewById<View>(R.id.layoutAddress).setOnClickListener {
             showKeyboard(addressEditText)
@@ -69,10 +122,42 @@ class AddCourtFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initViews(view)
+
         clearCourtName.setOnClickListener { courtNameEditText.text.clear() }
-        clearCourtType.setOnClickListener { courtTypeEditText.text.clear() }
         clearAddress.setOnClickListener { addressEditText.text.clear() }
         clearNumCourts.setOnClickListener { numCourtsEditText.text.clear() }
+
+        // Apply button: construct proper Court object (Tennis or Basketball)
+        view.findViewById<View>(R.id.buttonApply).setOnClickListener {
+            val name = courtNameEditText.text.toString().trim()
+            val address = addressEditText.text.toString().trim()
+            val totalCourts = numCourtsEditText.text.toString().toIntOrNull() ?: 1
+
+            val washroom = checkboxWashroom.isChecked
+            val lights = checkboxLights.isChecked
+            val accessibility = checkboxAccessibility.isChecked
+            val indoor = !checkboxIndoor.isChecked // map from outdoor checkbox
+
+            val base = CourtBase(
+                name = name,
+                address = address,
+                washroom = washroom,
+                indoor = indoor,
+                lights = lights,
+                accessibility = accessibility,
+                totalCourts = totalCourts,
+                courtsAvailable = totalCourts
+            )
+
+            when (courtTypeSpinner.selectedItemPosition) {
+                0 -> {
+                    val court = TennisCourt(base = base, practiceWall = checkboxPracticeWall.isChecked)
+                }
+                1 -> {
+                    val court = BasketballCourt(base = base, nets = checkboxNets.isChecked)
+                }
+            }
+        }
     }
 
 }

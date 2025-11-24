@@ -91,28 +91,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <EditText
-                    android:id="@+id/editTextCourtType"
+                <Spinner
+                    android:id="@+id/spinnerCourtType"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@android:color/transparent"
-                    android:hint="@string/court_type_hint"
+                    android:entries="@array/court_type_options"
                     android:paddingStart="0dp"
-                    android:paddingEnd="32dp"
-                    android:textColor="@color/oc_text_primary"
-                    android:textSize="16sp"
-                    android:inputType="text"
-                    android:autofillHints="username" />
+                    android:layout_marginStart="-8dp"
+                    android:layout_marginEnd="-12dp"
+                     />
 
-                <ImageView
-                    android:id="@+id/clearCourtType"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/cancel_outlined"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:contentDescription="@string/clear"
-                    app:tint="@color/oc_icon_tint" />
             </RelativeLayout>
         </LinearLayout>
 
@@ -250,7 +238,6 @@
                         android:id="@+id/checkboxLights"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:checked="true"
                         android:buttonTint="@color/oc_primary" />
                 </LinearLayout>
                 <View
@@ -268,14 +255,13 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="@string/outdoor"
+                        android:text="@string/indoor"
                         android:textColor="@color/oc_text_primary"
                         android:textSize="16sp" />
                     <CheckBox
-                        android:id="@+id/checkboxOutdoor"
+                        android:id="@+id/checkboxIndoor"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:checked="true"
                         android:buttonTint="@color/oc_primary" />
                 </LinearLayout>
                 <View
@@ -300,7 +286,6 @@
                         android:id="@+id/checkboxWashroom"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:checked="true"
                         android:buttonTint="@color/oc_primary" />
                 </LinearLayout>
                 <View
@@ -325,7 +310,96 @@
                         android:id="@+id/checkboxAccessibility"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:checked="true"
+                        android:buttonTint="@color/oc_primary" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Type-specific amenities section -->
+        <LinearLayout
+            android:id="@+id/layoutTypeSpecific"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:id="@+id/layoutTennisAmenities"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="0dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/tennis_options"
+                    android:textStyle="bold"
+                    android:textColor="@color/oc_text_primary"
+                    android:textSize="14sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@color/oc_card_light"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="4dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/practice_wall"
+                        android:textColor="@color/oc_text_primary"
+                        android:textSize="16sp" />
+
+                    <CheckBox
+                        android:id="@+id/checkboxPracticeWall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/oc_primary" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutBasketballAmenities"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/basketball_options"
+                    android:textStyle="bold"
+                    android:textColor="@color/oc_text_primary"
+                    android:textSize="14sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@color/oc_card_light"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="4dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/nets"
+                        android:textColor="@color/oc_text_primary"
+                        android:textSize="16sp" />
+
+                    <CheckBox
+                        android:id="@+id/checkboxNets"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:buttonTint="@color/oc_primary" />
                 </LinearLayout>
             </LinearLayout>
