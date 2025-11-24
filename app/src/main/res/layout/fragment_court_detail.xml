@@ -6,12 +6,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:background="@color/white">
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:id="@+id/detail_scrollview"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/check_in_button"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:fillViewport="true">
@@ -98,27 +98,25 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/courts_recycler_view"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:layout_marginTop="12dp"
                 android:background="#FFF7FF"
-                tools:listitem="@layout/item_court_status"
-                android:scrollbars="none" />
-
-            <!-- Check In button at the end of the scrollable content -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
-            <Button
-                android:id="@+id/check_in_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Check In"
-                android:backgroundTint="@color/purple_500"
-                android:textColor="@color/white"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="16dp" />
+                android:nestedScrollingEnabled="true"
+                android:scrollbars="none"
+                tools:listitem="@layout/item_court_status" />
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
+
+    <Button
+        android:id="@+id/check_in_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Check In"
+        android:backgroundTint="@color/purple_500"
+        android:textColor="@color/white"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

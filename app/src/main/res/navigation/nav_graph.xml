@@ -15,7 +15,11 @@
     <fragment
         android:id="@+id/mapFragment"
         android:name="com.example.group22_opencourt.ui.main.MapFragment"
-        android:label="MapFragment" />
+        android:label="MapFragment" >
+        <action
+            android:id="@+id/action_mapFragment_to_courtDetailFragment"
+            app:destination="@id/courtDetailFragment" />
+    </fragment>
     <fragment
         android:id="@+id/settingsFragment"
         android:name="com.example.group22_opencourt.ui.main.SettingsFragment"

@@ -14,6 +14,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.group22_opencourt.databinding.ActivityMainBinding
@@ -41,6 +42,33 @@ class MainActivity : AppCompatActivity(), LocationListener {
 //
         // Set up bottom navigation with NavController
         binding.bottomNav.setupWithNavController(navController)
+
+        binding.bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.homeFragment -> {
+                    // Always go back to the base firstFragment, clearing anything above it
+                    val options = NavOptions.Builder()
+                        .setPopUpTo(R.id.homeFragment, inclusive = false)
+                        .build()
+                    navController.navigate(R.id.homeFragment, null, options)
+                    true
+                }
+                R.id.mapFragment -> {
+                    navController.navigate(R.id.mapFragment)
+                    true
+                }
+                R.id.addCourtFragment -> {
+                    navController.navigate(R.id.addCourtFragment)
+                    true
+                }
+                R.id.settingsFragment -> {
+                    navController.navigate(R.id.settingsFragment)
+                    true
+                }
+                else -> false
+            }
+        }
+
 
         // Update toolbar title on destination change
         navController.addOnDestinationChangedListener { _, destination, _ ->

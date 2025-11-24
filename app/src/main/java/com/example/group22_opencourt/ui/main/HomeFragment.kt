@@ -216,10 +216,9 @@ class HomeFragment : Fragment() {
     }
 
     private fun onCourtSelected(documentId: String) {
-//        val action = HomeFragmentDirections.actionHomeFragmentToCourtDetailFragment(documentId)
-//        findNavController().navigate(action)
-
-
-        (activity as? MainActivity)?.showCourtDetail(documentId)
+        val args = Bundle().apply {
+            putString("document_id", documentId)
+        }
+        findNavController().navigate(R.id.action_homeFragment_to_courtDetailFragment, args)
     }
 }
