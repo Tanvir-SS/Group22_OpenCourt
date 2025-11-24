@@ -35,7 +35,11 @@ import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
 import com.example.group22_opencourt.BuildConfig
-
+import androidx.fragment.app.activityViewModels
+import com.google.android.gms.maps.model.Marker
+import android.widget.ImageView
+import android.widget.TextView
+import com.example.group22_opencourt.model.Court
 
 
 class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButtonClickListener {
@@ -46,6 +50,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
     private var mapMovedByUser = false
     private lateinit var placesClient: PlacesClient
     private var hasCenteredOnUser = false
+    private val viewModel: HomeViewModel by activityViewModels()
 
     // binding setup
     override fun onCreateView(
@@ -98,10 +103,11 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
     }
 
     private fun setupSearchBar() {
+        // handle search bar input
         binding.searchEditText.setOnEditorActionListener { v, actionId, event ->
             val address = v.text.toString()
             Log.d("MapFragment", "Search bar input: $address")
-
+            // check for search action or enter key
             val isEnterKey = event != null &&
                     event.keyCode == android.view.KeyEvent.KEYCODE_ENTER &&
                     event.action == android.view.KeyEvent.ACTION_DOWN
@@ -109,12 +115,13 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
             if (actionId == EditorInfo.IME_ACTION_SEARCH ||
                 actionId == EditorInfo.IME_ACTION_DONE ||
                 isEnterKey) {
-
+                // hide keyboard if search initiated
                 hideKeyboard()
-
+                // perform search if address is not empty
                 if (address.isNotEmpty()) {
                     Toast.makeText(requireContext(), "Searching...", Toast.LENGTH_LONG).show()
                     searchAndMarkLocation(address)
+                    // clear search bar
                     binding.searchEditText.text.clear()
                     binding.searchEditText.clearFocus()
                 } else {
@@ -131,18 +138,19 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
 
     private fun searchAndMarkLocation(query: String) {
         Log.d("MapFragment", "Places search for: $query")
-
+        // validate input
         if (query.isBlank()) {
             Toast.makeText(requireContext(), "Enter a location", Toast.LENGTH_SHORT).show()
             Log.e("MapFragment", "Empty query")
             return
         }
-
+        // build autocomplete request
         val request = FindAutocompletePredictionsRequest.builder()
             .setQuery(query)
             .build()
-
+        // execute autocomplete request
         placesClient.findAutocompletePredictions(request)
+            // handle successful response
             .addOnSuccessListener { response ->
                 val predictions = response.autocompletePredictions
 
@@ -157,7 +165,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
                     "MapFragment",
                     "Prediction selected: ${prediction.placeId} - ${prediction.getFullText(null)}"
                 )
-
+                // build place details request
                 val placeRequest = FetchPlaceRequest.builder(
                     prediction.placeId,
                     listOf(
@@ -167,7 +175,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
                         Place.Field.LAT_LNG
                     )
                 ).build()
-
+                // execute place details request
                 placesClient.fetchPlace(placeRequest)
                     .addOnSuccessListener { placeResponse ->
                         val place = placeResponse.place
@@ -180,30 +188,53 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
                         }
 
                         Log.d("MapFragment", "Resolved place: ${place.name} at $latLng")
-
-                        map.clear()
+                        // add marker to map
                         map.addMarker(
                             MarkerOptions()
                                 .position(latLng)
                                 .title(place.name)
                                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
                         )
-
+                        // move camera to location
                         map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16f))
-
                         Toast.makeText(requireContext(), "Found: ${place.name}", Toast.LENGTH_SHORT).show()
                     }
+                    // handle place details failure
                     .addOnFailureListener { e ->
                         Log.e("MapFragment", "FetchPlace failed", e)
                         Toast.makeText(requireContext(), "Failed to fetch place", Toast.LENGTH_SHORT).show()
                     }
             }
+            // handle autocomplete failure
             .addOnFailureListener { e ->
                 Log.e("MapFragment", "Autocomplete failed", e)
                 Toast.makeText(requireContext(), "Search failed", Toast.LENGTH_SHORT).show()
             }
     }
 
+
+    private fun observeCourts() {
+        // observe courts from ViewModel and add markers
+        viewModel.courts.observe(viewLifecycleOwner) { courts ->
+            for (court in courts) {
+                val geoPoint = court.base.geoPoint
+                if (geoPoint != null) {
+                    // get court location and add marker
+                    val latLng = LatLng(geoPoint.latitude, geoPoint.longitude)
+                    val marker = map.addMarker(
+                        MarkerOptions()
+                            .position(latLng)
+                            .title(court.base.name)
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+                    )
+                    // set the court as marker tag for info window
+                    marker?.tag = court
+                } else {
+                    Log.w("MapFragment", "Court ${court.base.name} does not have a valid GeoPoint")
+                }
+            }
+        }
+    }
 
     @SuppressLint("MissingPermission")
     override fun onMapReady(googleMap: GoogleMap) {
@@ -220,6 +251,42 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
             if (reason == GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE) {
                 mapMovedByUser = true
             }
+        }
+
+        map.setInfoWindowAdapter(object : GoogleMap.InfoWindowAdapter {
+            override fun getInfoWindow(marker: Marker): View? {
+                return null
+            }
+            // custom info window content
+            override fun getInfoContents(marker: Marker): View? {
+                val court = marker.tag as? Court ?: return null
+                val view = LayoutInflater.from(requireContext()).inflate(R.layout.custom_info_window, null)
+
+                val title = view.findViewById<TextView>(R.id.info_title)
+                val snippet = view.findViewById<TextView>(R.id.info_text)
+                val icon = view.findViewById<ImageView>(R.id.info_icon)
+
+                // set court name and details
+                title.text = court.base.name
+                snippet.text = "See Details"
+
+                // set the icon based on court type
+                val iconRes = when (court.type) {
+                    "tennis" -> R.drawable.ic_tennis
+                    "basketball" -> R.drawable.ic_basketball
+                    else -> R.drawable.ic_launcher_foreground
+                }
+                icon.setImageResource(iconRes)
+
+                return view
+            }
+        })
+
+        map.setOnInfoWindowClickListener { marker ->
+            val court = marker.tag as? Court ?: return@setOnInfoWindowClickListener
+            Log.d("MapFragment", "Info window clicked: ${court.base.name}")
+
+            // LAUNCH COURT DETAIL FRAGMENT HERE
         }
 
         // observe location updates from MainActivity
@@ -242,6 +309,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
         }
         setupMapTypeSpinner()
         setupSearchBar()
+        observeCourts()
     }
 
     override fun onMyLocationButtonClick(): Boolean {
@@ -268,12 +336,13 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
     }
 
     fun centerMapOnUser(location: Location) {
+        // center map on user location
         val latLng = LatLng(location.latitude, location.longitude)
-        map.clear()
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16f))
     }
 
     private fun hideKeyboard() {
+        // hide keyboard
         val inputMethodManager =
             requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE)
                     as android.view.inputmethod.InputMethodManager
