@@ -21,6 +21,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import androidx.navigation.fragment.findNavController
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
@@ -289,6 +290,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
             Log.d("MapFragment", "Info window clicked: ${court.base.name}")
 
             // LAUNCH COURT DETAIL FRAGMENT HERE
+            onCourtSelected(court.base.id)
         }
 
         // observe location updates from MainActivity
@@ -351,5 +353,12 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
 
         val view = requireActivity().currentFocus ?: View(requireContext())
         inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
+    }
+
+    private fun onCourtSelected(documentId: String) {
+        val args = Bundle().apply {
+            putString("document_id", documentId)
+        }
+        findNavController().navigate(R.id.action_mapFragment_to_courtDetailFragment, args)
     }
 }

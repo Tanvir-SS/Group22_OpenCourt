@@ -44,8 +44,9 @@
                     android:layout_height="wrap_content"
                     android:text="Edit Court"
                     android:backgroundTint="@color/purple_500"
-                    android:textColor="@color/white"
-                    android:layout_marginStart="8dp" />
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:textColor="@color/white"/>
             </LinearLayout>
 
             <!-- Address -->
@@ -116,6 +117,8 @@
         android:backgroundTint="@color/purple_500"
         android:textColor="@color/white"
         android:layout_marginTop="24dp"
+        android:layout_marginLeft="80dp"
+        android:layout_marginRight="80dp"
         android:layout_marginBottom="16dp"
         app:layout_constraintBottom_toBottomOf="parent"/>
 

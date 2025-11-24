@@ -35,7 +35,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:text="See Details"
-            android:textColor="@color/purple_700"
+            android:textColor="@color/purple_500"
             android:clickable="true"
             android:textStyle="bold"/>
     </LinearLayout>

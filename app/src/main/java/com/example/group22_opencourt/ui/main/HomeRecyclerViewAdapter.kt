@@ -36,7 +36,6 @@ class HomeRecyclerViewAdapter(
         val addressView : TextView = binding.courtAddressText
         val imageView: ImageView = binding.courtImageView
         val distanceView : TextView = binding.courtDistanceText
-
         val availabilityView : TextView = binding.availableCourtsText
 
     }
@@ -60,16 +59,12 @@ class HomeRecyclerViewAdapter(
         holder.nameView.text = court.base.name
 //        holder.cityView.text = court.base.city
         holder.addressView.text = court.base.address
-        when (court) {
-            is BasketballCourt -> nameStr = "Basketball - "
-            is TennisCourt -> nameStr = "Tennis - "
-        }
         if (court.base.courtsAvailable > 0){
             holder.verticalBar.setBackgroundColor(ContextCompat.getColor(holder.itemView.context, R.color.oc_available))
         } else {
             holder.verticalBar.setBackgroundColor(ContextCompat.getColor(holder.itemView.context, R.color.oc_unavailable))
         }
-        holder.nameView.text = nameStr + court.base.name
+        holder.nameView.text = court.base.name
         holder.availabilityView.text = holder.itemView.context.getString(
             R.string.court_availability,
   court.base.courtsAvailable,
@@ -105,6 +100,12 @@ class HomeRecyclerViewAdapter(
                 holder.imageView.setImageResource(R.drawable.example_tennis_court)
             }
         }
+        val iconRes = when (court.type) {
+            "tennis" -> R.drawable.ic_tennis_ball
+            "basketball" -> R.drawable.ic_basketball_ball
+            else -> R.drawable.ic_launcher_foreground
+        }
+        holder.binding.courtTypeIcon.setImageResource(iconRes)
     }
 
     override fun getItemCount(): Int {

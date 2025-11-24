@@ -16,7 +16,7 @@
     <color name="oc_primary">#FF6200EE</color>
     <color name="oc_text_primary">#222222</color>
     <color name="oc_icon_tint">#545454</color>
-    <color name="oc_available">#2BF00F</color>
-    <color name="oc_unavailable">#D00024</color>
+    <color name="oc_available">#28C810</color>
+    <color name="oc_unavailable">#CE112D</color>
 
 </resources>
