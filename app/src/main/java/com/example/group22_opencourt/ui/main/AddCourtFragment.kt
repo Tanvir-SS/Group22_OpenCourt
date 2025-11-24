@@ -12,10 +12,15 @@ import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.ArrayAdapter
 import android.widget.AdapterView
+import android.widget.Toast
+import androidx.lifecycle.lifecycleScope
 import com.example.group22_opencourt.R
 import com.example.group22_opencourt.model.BasketballCourt
 import com.example.group22_opencourt.model.CourtBase
 import com.example.group22_opencourt.model.TennisCourt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class AddCourtFragment : Fragment() {
     private lateinit var courtNameEditText: android.widget.EditText
@@ -35,6 +40,8 @@ class AddCourtFragment : Fragment() {
     private lateinit var layoutBasketballAmenities: LinearLayout
     private lateinit var checkboxPracticeWall: CheckBox
     private lateinit var checkboxNets: CheckBox
+
+    private var allowAdd = true
 
     private fun showKeyboard(editText: android.widget.EditText) {
         editText.requestFocus()
@@ -129,6 +136,10 @@ class AddCourtFragment : Fragment() {
 
         // Apply button: construct proper Court object (Tennis or Basketball)
         view.findViewById<View>(R.id.buttonApply).setOnClickListener {
+            if (!allowAdd) {
+                return@setOnClickListener
+            }
+            allowAdd = false
             val name = courtNameEditText.text.toString().trim()
             val address = addressEditText.text.toString().trim()
             val totalCourts = numCourtsEditText.text.toString().toIntOrNull() ?: 1
@@ -148,16 +159,46 @@ class AddCourtFragment : Fragment() {
                 totalCourts = totalCourts,
                 courtsAvailable = totalCourts
             )
-
-            when (courtTypeSpinner.selectedItemPosition) {
-                0 -> {
-                    val court = TennisCourt(base = base, practiceWall = checkboxPracticeWall.isChecked)
+            val repository = CourtRepository.instance
+            lifecycleScope.launch {
+                val result = CourtRepository.getGeoPointFromAddress(base.address)
+                if (result != null) {
+                    val (geoPoint, formatted) = result
+                    base.address = formatted
+                    base.geoPoint = geoPoint
+                    when (courtTypeSpinner.selectedItemPosition) {
+                        0 -> {
+                            val court = TennisCourt(base = base, practiceWall = checkboxPracticeWall.isChecked)
+                            repository.addCourt(court) {
+                                if (it) {
+                                    Toast.makeText(requireContext(), "Court uploaded", Toast.LENGTH_SHORT).show()
+                                    parentFragmentManager.popBackStack()
+                                } else {
+                                    Toast.makeText(requireContext(), "Court failed to uploaded", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                        1 -> {
+                            val court = BasketballCourt(base = base, nets = checkboxNets.isChecked)
+                            repository.addCourt(court) {
+                                if (it) {
+                                    Toast.makeText(requireContext(), "Court uploaded", Toast.LENGTH_SHORT).show()
+                                    parentFragmentManager.popBackStack()
+                                } else {
+                                    Toast.makeText(requireContext(), "Court failed to uploaded", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Toast.makeText(requireContext(), "Failed to get location", Toast.LENGTH_SHORT).show()
                 }
-                1 -> {
-                    val court = BasketballCourt(base = base, nets = checkboxNets.isChecked)
-                }
+                allowAdd = true
             }
+
         }
     }
+
+
 
 }
