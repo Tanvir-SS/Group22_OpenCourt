@@ -26,6 +26,9 @@ class EditCourtFragment : Fragment() {
         if (activity is MainActivity) {
             activity.showBackButton()
         }
+        //call this in the onSuccess = true of the modifyCourt
+        //navController.popBackStack()
+
     }
 }
 
