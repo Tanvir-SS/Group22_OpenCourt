@@ -1,6 +1,7 @@
 package com.example.group22_opencourt
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
@@ -41,6 +42,8 @@ class MainActivity : AppCompatActivity(), LocationListener {
         enableEdgeToEdge()
 
         checkPermissions()
+        val loginIntent : Intent = Intent(this, LoginActivity::class.java)
+        startActivity(loginIntent)
 
         //        // Set up NavController from NavHostFragment
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment

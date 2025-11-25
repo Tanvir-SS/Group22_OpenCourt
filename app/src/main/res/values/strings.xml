@@ -59,4 +59,10 @@
     <string name="basketball_options">Basketball Options</string>
     <string name="practice_wall">Practice Wall</string>
     <string name="nets">Nets</string>
+
+    <!-- LoginActivity Strings -->
+    <string name="login">Login</string>
+    <string name="login_with_gmail">Log in with Gmail</string>
+    <string name="dont_have_account">Don\'t have an account?</string>
+    <string name="sign_up">Sign up</string>
 </resources>

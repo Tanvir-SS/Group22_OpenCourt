@@ -58,6 +58,7 @@ android {
 
 dependencies {
     implementation(libs.play.services.location)
+    implementation(libs.googleid)
     val room_version = "2.8.3"
     ksp("androidx.room:room-compiler:$room_version")
     implementation("androidx.room:room-ktx:${room_version}")
@@ -93,5 +94,14 @@ dependencies {
 
 
     implementation("com.google.android.libraries.places:places:3.5.0")
+
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
+
+    implementation("androidx.credentials:credentials:1.6.0-beta03")
+    implementation("androidx.credentials:credentials-play-services-auth:1.6.0-beta03")
+
+    // Google Identity Services for Android
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
 }
