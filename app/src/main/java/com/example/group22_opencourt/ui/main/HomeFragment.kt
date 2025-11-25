@@ -29,7 +29,9 @@ import java.util.Locale
 class HomeFragment : Fragment() {
 
     private lateinit var binding: FragmentHomeBinding
-    private lateinit var adapter: HomeRecyclerViewAdapter
+    private var adapter: HomeRecyclerViewAdapter = HomeRecyclerViewAdapter(emptyList()) {
+        onCourtSelected(it.base.id)
+    }
     private val viewModel: HomeViewModel by activityViewModels()
 
     // Filter state
@@ -70,9 +72,6 @@ class HomeFragment : Fragment() {
                 latitude = latitude1
                 longitude = longitude1
             }
-        }
-        adapter = HomeRecyclerViewAdapter(courts, viewLifecycleOwner.lifecycleScope) {
-            onCourtSelected(it.base.id)
         }
         binding.recyclerView.adapter = adapter
 
@@ -188,7 +187,7 @@ class HomeFragment : Fragment() {
             }
         }
 
-        adapter.setItems(sorted) {
+        adapter.setItems(sorted, lifecycleScope) {
             onSuccess?.invoke(sorted)
         }
     }
@@ -196,7 +195,7 @@ class HomeFragment : Fragment() {
     fun updateUserLocation(location: Location) {
         val lastLocation = lastUserLocation
         var shouldUpdate = lastLocation == null || location.distanceTo(lastLocation) > locationUpdateThresholdMeters
-        if (!this::binding.isInitialized || !this::adapter.isInitialized) {
+        if (!this::binding.isInitialized) {
             return
         }
         if (shouldUpdate) {

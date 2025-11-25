@@ -24,7 +24,7 @@ import java.util.Locale
 import kotlin.collections.get
 
 class HomeRecyclerViewAdapter(
-    private var courtList: List<Court>, private var lifecycleScope: CoroutineScope, private val onItemClick: ((Court) -> Unit)? = null)
+    private var courtList: List<Court>, private val onItemClick: ((Court) -> Unit)? = null)
     : RecyclerView.Adapter<HomeRecyclerViewAdapter.ViewHolder>() {
 
     var location : Location? = null
@@ -111,7 +111,7 @@ class HomeRecyclerViewAdapter(
         return courtList.size
     }
 
-    fun setItems(newList: List<Court>, onSuccess: (() -> Unit)? = null) {
+    fun setItems(newList: List<Court>, lifecycleScope: CoroutineScope, onSuccess: (() -> Unit)? = null) {
         val oldList = courtList // Make a copy for thread safety
         lifecycleScope.launch(Dispatchers.Default) {
             val diffCallback = object : DiffUtil.Callback() {
