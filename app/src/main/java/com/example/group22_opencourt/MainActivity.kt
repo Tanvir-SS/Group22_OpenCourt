@@ -22,6 +22,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.navigation.findNavController
 
 import com.example.group22_opencourt.databinding.ActivityMainBinding
+import com.google.firebase.auth.FirebaseAuth
 
 
 class MainActivity : AppCompatActivity(), LocationListener {
@@ -40,11 +41,13 @@ class MainActivity : AppCompatActivity(), LocationListener {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         enableEdgeToEdge()
-
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user == null) {
+            val loginIntent : Intent = Intent(this, LoginActivity::class.java)
+            startActivity(loginIntent)
+            finish()
+        }
         checkPermissions()
-        val loginIntent : Intent = Intent(this, LoginActivity::class.java)
-        startActivity(loginIntent)
-
         //        // Set up NavController from NavHostFragment
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         navController = navHostFragment.navController

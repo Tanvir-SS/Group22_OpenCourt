@@ -2,11 +2,13 @@ package com.example.group22_opencourt
 
 import android.content.Intent
 import android.os.Bundle
+import android.transition.AutoTransition
+import android.transition.TransitionManager
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.Credential
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
@@ -22,9 +24,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 
 class LoginActivity : AppCompatActivity() {
@@ -43,21 +43,12 @@ class LoginActivity : AppCompatActivity() {
         auth = Firebase.auth
         credentialManager = CredentialManager.create(baseContext)
 
+        auth.signOut()
 
+        // Default to login screen visible
+        showLoginForm()
 
-
-
-        // Placeholder click listeners
         binding.buttonLogin.setOnClickListener {
-//            auth.signOut()
-//            // Clear Credential Manager stored credential
-//            val clearRequest = ClearCredentialStateRequest()
-//            lifecycleScope.launch {
-//                credentialManager.clearCredentialState(clearRequest)
-//                withContext(Dispatchers.Main) {
-//                    Toast.makeText(this@LoginActivity, "signed out", Toast.LENGTH_SHORT).show()
-//                }
-//            }
             val email = binding.editTextEmail.text.toString()
             val password = binding.editTextPassword.text.toString()
             loginWithEmail(email, password)
@@ -65,14 +56,41 @@ class LoginActivity : AppCompatActivity() {
 
         binding.buttonLoginGmail.setOnClickListener {
             launchCredentialManager()
-
-            Toast.makeText(this, "Login with Gmail clicked", Toast.LENGTH_SHORT).show()
         }
 
+        // Small "Sign up" under login
         binding.textSignUp.setOnClickListener {
-            Toast.makeText(this, "Sign up clicked", Toast.LENGTH_SHORT).show()
-
+            showSignupForm()
         }
+
+        // Signup screen: buttons
+        binding.buttonSignupSubmit.setOnClickListener {
+            val email = binding.editTextSignupEmail.text.toString()
+            val password = binding.editTextSignupPassword.text.toString()
+            val confirm = binding.editTextSignupConfirmPassword.text.toString()
+            signupWithEmail(email, password, confirm)
+        }
+
+        // New bottom text on signup screen
+        binding.textAlreadyHaveAccountLogin.setOnClickListener {
+            showLoginForm()
+        }
+    }
+
+    private fun showLoginForm() {
+        val transition = AutoTransition()
+        transition.duration = 250
+        TransitionManager.beginDelayedTransition(binding.root, transition)
+        binding.layoutLoginRoot.visibility = View.VISIBLE
+        binding.layoutSignupRoot.visibility = View.GONE
+    }
+
+    private fun showSignupForm() {
+        val transition = AutoTransition()
+        transition.duration = 250
+        TransitionManager.beginDelayedTransition(binding.root, transition)
+        binding.layoutLoginRoot.visibility = View.GONE
+        binding.layoutSignupRoot.visibility = View.VISIBLE
     }
 
     private fun loginWithEmail(email: String, password: String) {
@@ -92,6 +110,31 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
+    private fun signupWithEmail(email: String, password: String, confirmPassword: String) {
+        if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+            Toast.makeText(this, "Fill in all fields", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (password != confirmPassword) {
+            Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (password.length < 6) {
+            Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        auth.createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    navigateToMain()
+                } else {
+                    Toast.makeText(this, "Sign up failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+    }
 
     private fun navigateToMain () {
         val intent = Intent(this, MainActivity::class.java)
@@ -159,4 +202,38 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
+    //with email authenication
+    //        auth.createUserWithEmailAndPassword(email, password)
+    //            .addOnCompleteListener(this) { task ->
+    //                if (task.isSuccessful) {
+    //                    // Optionally log in automatically and navigate
+    //                    val user = auth.currentUser
+    //                    user?.sendEmailVerification()
+    //                        ?.addOnCompleteListener { task ->
+    //                            if (task.isSuccessful) {
+    //                                Toast.makeText(this, "Verification email sent", Toast.LENGTH_SHORT).show()
+    //                                showLoginForm()
+    //                            } else {
+    //                                Toast.makeText(this, "Failed to send verification email", Toast.LENGTH_SHORT).show()
+    //                            }
+    //                        }
+    //                } else {
+    //                    Toast.makeText(this, "Sign up failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+    //                }
+    //            }
+
+    //        auth.signInWithEmailAndPassword(email, password)
+    //            .addOnCompleteListener(this) { task ->
+    //                if (task.isSuccessful) {
+    //                    val user = auth.currentUser
+    //                    if (user != null && user.isEmailVerified) {
+    //                        navigateToMain() // Email verified → allow access
+    //                    } else {
+    //                        Toast.makeText(this, "Please verify your email", Toast.LENGTH_SHORT).show()
+    //                        auth.signOut() // optional: prevent unverified login
+    //                    }
+    //                } else {
+    //                    Toast.makeText(this, "Login failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+    //                }
+    //            }
 }

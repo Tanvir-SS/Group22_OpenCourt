@@ -62,7 +62,12 @@
 
     <!-- LoginActivity Strings -->
     <string name="login">Login</string>
-    <string name="login_with_gmail">Log in with Gmail</string>
+    <string name="login_with_gmail">Log in with Google</string>
     <string name="dont_have_account">Don\'t have an account?</string>
     <string name="sign_up">Sign up</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="cancel">Cancel</string>
+    <string name="switch_to_login">Already have an account? Log in</string>
+    <string name="login_title">Login to your account</string>
+    <string name="signup_title">Create your account</string>
 </resources>
