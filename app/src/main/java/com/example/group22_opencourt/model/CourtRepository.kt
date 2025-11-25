@@ -29,6 +29,7 @@ class CourtRepository private constructor() {
     /** Start listening for courts in a city */
     fun listenCourtsByCity(city: String) {
         listenerRegistration?.remove()
+        _courts.postValue(emptyList())
         listenerRegistration = courtsCollection
 //            .whereEqualTo("city", city)
             .addSnapshotListener { snapshot, error ->
