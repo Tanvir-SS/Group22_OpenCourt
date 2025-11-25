@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.group22_opencourt.MainActivity
 import com.example.group22_opencourt.R
 import com.example.group22_opencourt.databinding.FragmentHomeBinding
@@ -62,9 +63,8 @@ class HomeFragment : Fragment() {
             DividerItemDecoration.VERTICAL
         )
         binding.recyclerView.addItemDecoration(dividerItemDecoration)
-        lastUserLocation = null
         val latitude1 = arguments?.getDouble("latitude") ?: 0.0
-        val longitude1 = arguments?.getDouble("latitude") ?: 0.0
+        val longitude1 = arguments?.getDouble("longitude") ?: 0.0
         if (latitude1 != 0.0) {
             lastUserLocation = Location("manual").apply {
                 latitude = latitude1
@@ -79,7 +79,10 @@ class HomeFragment : Fragment() {
         // Observe courts from ViewModel and update adapter
         viewModel.courts.observe(viewLifecycleOwner) { courts ->
             this@HomeFragment.courts = courts
-            applyAllFilters()
+            Log.d("debug", "filter called from observer $lastUserLocation")
+            applyAllFilters() {
+                Log.d("debug", "onsuccess")
+            }
         }
 
         // Filter button logic
@@ -136,15 +139,16 @@ class HomeFragment : Fragment() {
     }
 
     private fun applyAllFilters(onSuccess: ((List<Court>) -> Unit)? = null) {
+        val location = lastUserLocation
+        if (location == null) {
+            return
+        }
+        adapter.location = lastUserLocation
         val filtered = courts.filter { court ->
             var typeMatch = false
             when (court) {
                 is BasketballCourt -> typeMatch = showBasketball
                 is TennisCourt -> typeMatch = showTennis
-            }
-            val location = lastUserLocation
-            if (location == null) {
-                return
             }
             val geoPoint = court.base.geoPoint
             val distanceMatch = if (location != null && geoPoint != null) {
@@ -164,27 +168,26 @@ class HomeFragment : Fragment() {
             }
             typeMatch && distanceMatch && availableMatch
         }
-        val location = lastUserLocation
         var sorted = filtered
-        if (location != null) {
-            //sort by shortest distance
-            sorted = filtered.sortedBy { court ->
-                val geoPoint = court.base.geoPoint
-                if (geoPoint != null) {
-                    val results = FloatArray(1)
-                    Location.distanceBetween(
-                        location.latitude, location.longitude,
-                        geoPoint.latitude, geoPoint.longitude,
-                        results
-                    )
-                    //return distance
-                    results[0]
-                } else {
-                    //return max distance because no location data
-                    Float.MAX_VALUE
-                }
+
+        //sort by shortest distance
+        sorted = filtered.sortedBy { court ->
+            val geoPoint = court.base.geoPoint
+            if (geoPoint != null) {
+                val results = FloatArray(1)
+                Location.distanceBetween(
+                    location.latitude, location.longitude,
+                    geoPoint.latitude, geoPoint.longitude,
+                    results
+                )
+                //return distance
+                results[0]
+            } else {
+                //return max distance because no location data
+                Float.MAX_VALUE
             }
         }
+
         adapter.setItems(sorted) {
             onSuccess?.invoke(sorted)
         }
@@ -197,8 +200,8 @@ class HomeFragment : Fragment() {
             return
         }
         if (shouldUpdate) {
-            adapter.location = location
             lastUserLocation = location
+            Log.d("debug", "filter called from update userLocation")
             applyAllFilters() { sorted ->
                 //the apply filters only updates position and reuses viewHolders if on screen
                 //apply this to update the any detail on the texts in the viewholders

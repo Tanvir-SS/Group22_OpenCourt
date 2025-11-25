@@ -52,7 +52,6 @@ class HomeRecyclerViewAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val court = courtList[position]
-        var nameStr = ""
         holder.binding.root.setOnClickListener {
             onItemClick?.invoke(court)
         }
