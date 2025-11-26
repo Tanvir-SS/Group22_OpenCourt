@@ -89,7 +89,7 @@
         android:id="@+id/check_in_apply"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Apply"
+        android:text="Confirm"
         android:backgroundTint="@color/purple_500"
         android:textColor="@color/white"
         android:layout_marginLeft="150dp"

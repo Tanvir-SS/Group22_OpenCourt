@@ -270,10 +270,10 @@
 
         <Button
             android:id="@+id/edit_buttonApply"
-            android:layout_width="120dp"
+            android:layout_width="160dp"
             android:layout_height="48dp"
             android:layout_gravity="center_horizontal"
-            android:text="@string/apply"
+            android:text="Apply Changes"
             android:textColor="@color/white"
             android:textStyle="bold"
             android:backgroundTint="@color/oc_primary"
