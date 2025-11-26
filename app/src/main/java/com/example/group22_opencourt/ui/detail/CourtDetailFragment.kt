@@ -60,6 +60,19 @@ class CourtDetailFragment : Fragment() {
             Log.d("debug", "message")
             if (court != null) {
                 Log.d("debug", court.toString())
+                if (court.base.courtsAvailable == 0) {
+                    val activity = requireActivity()
+                    if (activity is MainActivity) {
+                        activity.showToolBarButton("Notify When\navailable") {
+                            startNotificationService()
+                        }
+                    }
+                } else {
+                    val activity = requireActivity()
+                    if (activity is MainActivity) {
+                        activity.hideToolBarButton()
+                    }
+                }
                 // Title: "{name} ({number of courts})"
                 val titleView = view.findViewById<android.widget.TextView>(R.id.court_title)
                 var titleString = ""
@@ -116,6 +129,11 @@ class CourtDetailFragment : Fragment() {
         if (activity is MainActivity) {
             activity.showBackButton()
         }
+    }
+
+
+    private fun startNotificationService() {
+        //stuff
     }
 
     companion object {
