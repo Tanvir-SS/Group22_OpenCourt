@@ -33,7 +33,23 @@
     <fragment
         android:id="@+id/courtDetailFragment"
         android:name="com.example.group22_opencourt.ui.detail.CourtDetailFragment"
-        android:label="CourtDetailFragment"/>
-
+        android:label="CourtDetailFragment">
+        <action
+            android:id="@+id/action_courtDetailFragment_to_editCourtFragment"
+            app:destination="@id/editCourtFragment" />
+        <action
+            android:id="@+id/action_courtDetailFragment_to_checkInFragment"
+            app:destination="@id/checkInFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/editCourtFragment"
+        android:name="com.example.group22_opencourt.ui.detail.EditCourtFragment"
+        android:label="EditCourtFragment"
+        tools:layout="@layout/fragment_edit_court" />
+    <fragment
+        android:id="@+id/checkInFragment"
+        android:name="com.example.group22_opencourt.ui.detail.CheckInFragment"
+        android:label="fragment_check_in"
+        tools:layout="@layout/fragment_check_in" />
 
 </navigation>

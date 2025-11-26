@@ -21,6 +21,7 @@ import com.example.group22_opencourt.model.TennisCourt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.text.clear
 
 class AddCourtFragment : Fragment() {
     private lateinit var courtNameEditText: android.widget.EditText
@@ -172,7 +173,8 @@ class AddCourtFragment : Fragment() {
                             repository.addCourt(court) {
                                 if (it) {
                                     Toast.makeText(requireContext(), "Court uploaded", Toast.LENGTH_SHORT).show()
-                                    parentFragmentManager.popBackStack()
+                                    resetForm()
+
                                 } else {
                                     Toast.makeText(requireContext(), "Court failed to uploaded", Toast.LENGTH_SHORT).show()
                                 }
@@ -183,7 +185,7 @@ class AddCourtFragment : Fragment() {
                             repository.addCourt(court) {
                                 if (it) {
                                     Toast.makeText(requireContext(), "Court uploaded", Toast.LENGTH_SHORT).show()
-                                    parentFragmentManager.popBackStack()
+                                    resetForm()
                                 } else {
                                     Toast.makeText(requireContext(), "Court failed to uploaded", Toast.LENGTH_SHORT).show()
                                 }
@@ -197,6 +199,28 @@ class AddCourtFragment : Fragment() {
             }
 
         }
+    }
+
+    private fun resetForm() {
+        // Text fields
+        courtNameEditText.text.clear()
+        addressEditText.text.clear()
+        numCourtsEditText.text.clear()
+
+        // Spinner: go back to first option (e.g. Tennis)
+        courtTypeSpinner.setSelection(0)
+
+        // Shared amenities
+        checkboxLights.isChecked = false
+        checkboxIndoor.isChecked = false
+        checkboxWashroom.isChecked = false
+        checkboxAccessibility.isChecked = false
+
+        // Tennis vs Basketball sections
+        checkboxPracticeWall.isChecked = false
+        checkboxNets.isChecked = false
+        layoutTennisAmenities.visibility = View.VISIBLE
+        layoutBasketballAmenities.visibility = View.GONE
     }
 
 

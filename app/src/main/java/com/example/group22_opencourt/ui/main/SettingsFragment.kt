@@ -1,12 +1,16 @@
 package com.example.group22_opencourt.ui.main
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import android.widget.Button
+import android.widget.Toast
+import com.example.group22_opencourt.LoginActivity
 import com.example.group22_opencourt.R
 
 class SettingsFragment : Fragment() {
@@ -61,5 +65,13 @@ class SettingsFragment : Fragment() {
         clearUsername.setOnClickListener { usernameEditText.text.clear() }
         clearFavLocation.setOnClickListener { favLocationEditText.text.clear() }
         clearOtherSettings.setOnClickListener { otherSettingsEditText.text.clear() }
+        val saveButton : Button = view.findViewById(R.id.buttonSaveSettings)
+        saveButton.setOnClickListener {
+            val intent = Intent(requireContext(), LoginActivity::class.java)
+            startActivity(intent)
+            Toast.makeText(requireContext(), "Signed Out", Toast.LENGTH_SHORT).show()
+            requireActivity().finish()
+
+        }
     }
 }
