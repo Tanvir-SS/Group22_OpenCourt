@@ -40,7 +40,12 @@ import androidx.fragment.app.activityViewModels
 import com.google.android.gms.maps.model.Marker
 import android.widget.ImageView
 import android.widget.TextView
+import com.example.group22_opencourt.model.BasketballCourt
 import com.example.group22_opencourt.model.Court
+import com.example.group22_opencourt.model.TennisCourt
+import kotlin.text.clear
+import kotlin.text.compareTo
+import kotlin.times
 
 
 class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButtonClickListener {
@@ -52,10 +57,16 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
     private lateinit var placesClient: PlacesClient
     private var hasCenteredOnUser = false
     private val viewModel: HomeViewModel by activityViewModels()
+    private var currentReferenceLocation: Location? = null
+    private var searchMarker: Marker? = null
 
+    // filter state
+    private var showTennis = true
+    private var showBasketball = true
+    private var selectedDistanceKm = 5 // Default distance
+    private val distanceIntervals = listOf(1, 2, 5, 10, 25)
 
     // binding setup
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -80,6 +91,53 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
             Places.initialize(requireContext(), BuildConfig.MAPS_API_KEY)
         }
         placesClient= Places.createClient(requireContext())
+
+        // Filter button logic
+        binding.filterButton.setOnClickListener {
+            val inflater = LayoutInflater.from(requireContext())
+            val popupView = inflater.inflate(R.layout.map_filter_popup, null)
+            val minWidthPx = (180 * resources.displayMetrics.density).toInt()
+            val buttonWidth = binding.filterButton.width
+            val popupWidth = if (buttonWidth > minWidthPx) buttonWidth else minWidthPx
+            val popupWindow = android.widget.PopupWindow(
+                popupView,
+                popupWidth,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                true
+            )
+            popupWindow.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+            popupWindow.isOutsideTouchable = true
+            // Set initial checkbox states
+            val tennisCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(
+                R.id.map_checkbox_tennis)
+            val basketballCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.map_checkbox_basketball)
+            tennisCheck.isChecked = showTennis
+            basketballCheck.isChecked = showBasketball
+            // Checkbox listeners
+            tennisCheck.setOnCheckedChangeListener { _, isChecked ->
+                showTennis = isChecked
+                observeCourts()
+            }
+            basketballCheck.setOnCheckedChangeListener { _, isChecked ->
+                showBasketball = isChecked
+                observeCourts()
+            }
+            //  Distance slider logic
+            val distanceSlider = popupView.findViewById<com.google.android.material.slider.Slider>(R.id.map_distance_slider)
+            val distanceValue = popupView.findViewById<android.widget.TextView>(R.id.map_distance_value)
+            // Set initial slider position
+            val initialIndex = distanceIntervals.indexOf(selectedDistanceKm)
+            distanceSlider.value = if (initialIndex >= 0) initialIndex.toFloat() else 0f
+            distanceValue.text = "${distanceIntervals[distanceSlider.value.toInt()]} km"
+            distanceSlider.addOnChangeListener { _, value, _ ->
+                selectedDistanceKm = distanceIntervals[value.toInt()]
+                distanceValue.text = "${selectedDistanceKm} km"
+                observeCourts()
+            }
+            val xOffset = binding.filterButton.width - popupWidth
+            popupWindow.showAsDropDown(binding.filterButton, xOffset, 0)
+        }
+
     }
 
     private fun setupMapTypeSpinner() {
@@ -138,7 +196,6 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
         }
     }
 
-
     private fun searchAndMarkLocation(query: String) {
         Log.d("MapFragment", "Places search for: $query")
         // validate input
@@ -189,18 +246,26 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
                             Log.e("MapFragment", "No latLng for place: ${place.name}")
                             return@addOnSuccessListener
                         }
-
+                        val searchedLocation = Location("").apply {
+                            latitude = latLng.latitude
+                            longitude = latLng.longitude
+                        }
+                        currentReferenceLocation = searchedLocation
                         Log.d("MapFragment", "Resolved place: ${place.name} at $latLng")
-                        // add marker to map
-                        map.addMarker(
+                        // Remove previous search marker if exists
+                        searchMarker?.remove()
+
+                        // add a blue marker for searched location
+                        searchMarker = map.addMarker(
                             MarkerOptions()
                                 .position(latLng)
                                 .title(place.name)
                                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
                         )
                         // move camera to location
-                        map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16f))
+                        map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
                         Toast.makeText(requireContext(), "Found: ${place.name}", Toast.LENGTH_SHORT).show()
+                        observeCourts()
                     }
                     // handle place details failure
                     .addOnFailureListener { e ->
@@ -215,23 +280,41 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
             }
     }
 
-
     private fun observeCourts() {
-        // observe courts from ViewModel and add markers
+        // observe courts from ViewModel and update map markers
+        val referenceLocation = currentReferenceLocation ?: getUserLocation()
         viewModel.courts.observe(viewLifecycleOwner) { courts ->
+            map.clear()
+            searchMarker?.let { marker ->
+                // Re-add the search marker after clearing the map
+                searchMarker = map.addMarker(
+                    MarkerOptions()
+                        .position(marker.position)
+                        .title(marker.title)
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+                )
+            }
+
             for (court in courts) {
                 val geoPoint = court.base.geoPoint
                 if (geoPoint != null) {
-                    // get court location and add marker
-                    val latLng = LatLng(geoPoint.latitude, geoPoint.longitude)
-                    val marker = map.addMarker(
-                        MarkerOptions()
-                            .position(latLng)
-                            .title(court.base.name)
-                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
-                    )
-                    // set the court as marker tag for info window
-                    marker?.tag = court
+                    val courtLocation = Location("").apply {
+                        latitude = geoPoint.latitude
+                        longitude = geoPoint.longitude
+                    }
+                    val distanceMeters = referenceLocation.distanceTo(courtLocation)
+
+                    // Apply filters: court type and distance
+                    if (((court is TennisCourt && showTennis) || (court is BasketballCourt && showBasketball)) &&
+                        distanceMeters <= selectedDistanceKm * 1000) {
+                        val marker = map.addMarker(
+                            MarkerOptions()
+                                .position(LatLng(geoPoint.latitude, geoPoint.longitude))
+                                .title(court.base.name)
+                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+                        )
+                        marker?.tag = court
+                    }
                 } else {
                     Log.w("MapFragment", "Court ${court.base.name} does not have a valid GeoPoint")
                 }
@@ -248,6 +331,8 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
         map.uiSettings.isZoomControlsEnabled = true
         map.uiSettings.isCompassEnabled = true
         map.isMyLocationEnabled = true
+
+        map.setPadding(0,100,0,0)
 
         // detect if user moved the map
         map.setOnCameraMoveStartedListener { reason ->
@@ -319,11 +404,14 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
     override fun onMyLocationButtonClick(): Boolean {
         // reset the flag so camera recenters
         mapMovedByUser = false
-
+        searchMarker?.remove()
+        map.clear()
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             val location = getUserLocation()
             withContext(Dispatchers.Main) {
+                currentReferenceLocation = location
                 centerMapOnUser(location)
+                observeCourts()
             }
         }
         return true
@@ -342,7 +430,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
     fun centerMapOnUser(location: Location) {
         // center map on user location
         val latLng = LatLng(location.latitude, location.longitude)
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16f))
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
     }
 
     private fun hideKeyboard() {
