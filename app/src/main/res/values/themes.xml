@@ -20,6 +20,5 @@
     </style>
 
     <style name="Theme.Group22_OpenCourt.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
-
     <style name="Theme.Group22_OpenCourt.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 </resources>

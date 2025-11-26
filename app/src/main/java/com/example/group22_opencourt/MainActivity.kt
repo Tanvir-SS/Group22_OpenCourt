@@ -46,8 +46,9 @@ class MainActivity : AppCompatActivity(), LocationListener {
             val loginIntent : Intent = Intent(this, LoginActivity::class.java)
             startActivity(loginIntent)
             finish()
+        } else {
+            checkPermissions()
         }
-        checkPermissions()
         //        // Set up NavController from NavHostFragment
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         navController = navHostFragment.navController
@@ -148,7 +149,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
     override fun onDestroy() {
         super.onDestroy()
         // Remove location updates to prevent memory leaks
-        if (locationManager != null)
+        if (::locationManager.isInitialized)
             locationManager.removeUpdates(this)
     }
 

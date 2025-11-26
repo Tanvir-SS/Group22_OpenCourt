@@ -91,8 +91,6 @@ dependencies {
 
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
-
-
     implementation("com.google.android.libraries.places:places:3.5.0")
 
     implementation("com.google.firebase:firebase-auth")
@@ -104,4 +102,5 @@ dependencies {
     // Google Identity Services for Android
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
+    implementation("androidx.core:core-splashscreen:1.2.0")
 }
