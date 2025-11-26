@@ -1,22 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/checkInFragment"
-    tools:context=".ui.detail.CheckInFragment">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="@color/white">
 
-    <TextView
-        android:id="@+id/textCheckIn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Check In"
-        android:textSize="24sp"
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/checkin_scrollview"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/check_in_apply"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Title and Edit Button -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/court_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="SFU Tennis Court (4)"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <!-- Address -->
+            <TextView
+                android:id="@+id/court_address"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Address, Example Street, Burnaby BC"
+                android:textSize="16sp"
+                android:textColor="@color/black"
+                android:layout_marginTop="4dp" />
+
+            <!-- Last Verified -->
+            <TextView
+                android:id="@+id/last_verified"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Last Verified: 10 min ago"
+                android:textSize="14sp"
+                android:textColor="@color/black"
+                android:layout_marginTop="8dp" />
+
+            <!-- All Courts -->
+            <TextView
+                android:id="@+id/All_courts_label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAlignment="center"
+                android:text="All Courts"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp" />
+
+            <!-- Courts List -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/courts_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginTop="12dp"
+                android:background="#FFF7FF"
+                android:nestedScrollingEnabled="true"
+                android:scrollbars="none"
+                tools:listitem="@layout/item_court_status" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <Button
+        android:id="@+id/check_in_apply"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Apply"
+        android:backgroundTint="@color/purple_500"
+        android:textColor="@color/white"
+        android:layout_marginLeft="150dp"
+        android:layout_marginRight="150dp"
+        android:layout_marginBottom="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
-

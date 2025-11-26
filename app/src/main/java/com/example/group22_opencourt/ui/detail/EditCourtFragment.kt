@@ -1,4 +1,5 @@
 package com.example.group22_opencourt.ui.detail
+
 import com.example.group22_opencourt.R
 import androidx.fragment.app.Fragment
 import android.view.ViewGroup
@@ -31,11 +32,3 @@ class EditCourtFragment : Fragment() {
 
     }
 }
-
-
-
-
-
-
-
-
