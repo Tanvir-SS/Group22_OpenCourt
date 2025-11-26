@@ -14,6 +14,7 @@ data class CourtBase(
     var accessibility : Boolean? = null,
     var totalCourts: Int = 1,
     var courtsAvailable: Int = 1,
+    var placesId : String = "",
     var photoURL: String = "",
     var courtStatus: ArrayList<CourtStatus> = ArrayList(),
     var geoPoint: GeoPoint? = null
