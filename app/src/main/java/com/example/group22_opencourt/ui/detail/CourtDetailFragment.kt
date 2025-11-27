@@ -72,7 +72,6 @@ class CourtDetailFragment : Fragment() {
         val weatherProgress = view.findViewById<android.widget.ProgressBar>(R.id.weather_progress)
 
         // Used to avoid geocoding + refetching repeatedly for the same court/address
-        var lastWeatherAddress: String? = null
 
         viewModel.weather.observe(viewLifecycleOwner) { state ->
             when (state) {
