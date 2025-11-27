@@ -6,6 +6,7 @@ import java.net.URL
 
 data class CurrentWeather(
     val tempC: Double,
+    val weatherCode: Int,
     val description: String,
     val windKmh: Double,
 )
@@ -34,8 +35,10 @@ object WeatherRepository {
         val code = current.getInt("weather_code")
         val wind = current.getDouble("wind_speed_10m")
 
+
         return CurrentWeather(
             tempC = temp,
+            weatherCode = code,
             description = weatherCodeToText(code),
             windKmh = wind
         )

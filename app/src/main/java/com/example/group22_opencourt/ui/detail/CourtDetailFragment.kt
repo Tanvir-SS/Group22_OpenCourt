@@ -86,7 +86,12 @@ class CourtDetailFragment : Fragment() {
                 is WeatherUiState.Ready -> {
                     weatherProgress.visibility = View.GONE
                     val w = state.weather
-                    weatherValue.text = "${w.tempC}°C · ${w.description} · Wind ${w.windKmh} km/h"
+                    val emoji = weatherCodeToEmoji(w.weatherCode)
+                    val temp = String.format(Locale.getDefault(), "%.0f", w.tempC)
+                    val wind = String.format(Locale.getDefault(), "%.0f", w.windKmh)
+
+                    weatherValue.text = "$emoji $temp°C · ${w.description} · Wind $wind km/h"
+
                 }
                 is WeatherUiState.Error -> {
                     weatherProgress.visibility = View.GONE
@@ -207,8 +212,17 @@ class CourtDetailFragment : Fragment() {
             null
         }
     }
-
-
+    private fun weatherCodeToEmoji(code: Int): String = when (code) {
+        0 -> "☀️"
+        1, 2, 3 -> "⛅"
+        45, 48 -> "🌫️"
+        51, 53, 55 -> "🌦️"
+        61, 63, 65 -> "🌧️"
+        71, 73, 75 -> "🌨️"
+        80, 81, 82 -> "🌦️"
+        95, 96, 99 -> "⛈️"
+        else -> "🌡️"
+    }
 
     private fun startNotificationService() {
         //stuff
