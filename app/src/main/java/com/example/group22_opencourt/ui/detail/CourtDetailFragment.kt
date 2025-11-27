@@ -1,40 +1,52 @@
 package com.example.group22_opencourt.ui.detail
 
 import CourtRepository
-import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.group22_opencourt.MainActivity
 import com.example.group22_opencourt.R
-import com.example.group22_opencourt.model.TennisCourt
 import com.example.group22_opencourt.model.BasketballCourt
 import com.example.group22_opencourt.model.Court
 import com.example.group22_opencourt.model.CourtStatus
+import com.example.group22_opencourt.model.TennisCourt
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.firebase.firestore.GeoPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 
-class CourtDetailFragment : Fragment() {
+class CourtDetailFragment : Fragment(), OnMapReadyCallback {
     private lateinit var viewModel: CourtDetailViewModel
     private lateinit var courtsRecyclerView : RecyclerView
 //    private val args: CourtDetailFragmentArgs by navArgs()
     private lateinit var adapter: CourtStatusAdapter
 
+    private var pendingLatLng: LatLng? = null
+
+    private var map : GoogleMap? = null
+
+    private lateinit var lastVerifiedTextView : TextView
     private var documentId = ""
 
     override fun onCreateView(
@@ -53,12 +65,31 @@ class CourtDetailFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val mapFragment = childFragmentManager.findFragmentById(R.id.map_fragment_lite) as? SupportMapFragment
+        mapFragment?.getMapAsync(this)
         courtsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        lastVerifiedTextView = view.findViewById(R.id.last_verified)
         adapter = CourtStatusAdapter(emptyList(), lifecycleScope)
         courtsRecyclerView.adapter = adapter
         viewModel.courtLiveData.observe(viewLifecycleOwner) { court ->
-            Log.d("debug", "message")
+            Log.d("map", "court loaded")
             if (court != null) {
+                val icon : ImageView = view.findViewById(R.id.court_icon_type)
+                when (court) {
+                    is TennisCourt -> icon.setImageResource(R.drawable.ic_tennis_ball)
+                    is BasketballCourt -> icon.setImageResource(R.drawable.ic_basketball_ball)
+                }
+                setLastVerified(court)
+                val geoPoint : GeoPoint? = court.base.geoPoint
+                if (map != null && geoPoint != null) {
+                    val latLng = LatLng(geoPoint.latitude, geoPoint.longitude)
+                    map!!.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
+                    map!!.addMarker(MarkerOptions().position(latLng))
+                } else {
+                    if (geoPoint != null) {
+                        pendingLatLng = LatLng(geoPoint.latitude, geoPoint.longitude)
+                    }
+                }
                 Log.d("debug", court.toString())
                 if (court.base.courtsAvailable == 0) {
                     val activity = requireActivity()
@@ -76,10 +107,10 @@ class CourtDetailFragment : Fragment() {
                 // Title: "{name} ({number of courts})"
                 val titleView = view.findViewById<android.widget.TextView>(R.id.court_title)
                 var titleString = ""
-                when (court) {
-                    is TennisCourt -> titleString = "Tennis - "
-                    is BasketballCourt -> titleString = "Basketball - "
-                }
+//                when (court) {
+//                    is TennisCourt -> titleString = "Tennis - "
+//                    is BasketballCourt -> titleString = "Basketball - "
+//                }
                 titleString += "${court.base.name} (${court.base.totalCourts})"
                 titleView.text = titleString
                 // Address
@@ -104,12 +135,9 @@ class CourtDetailFragment : Fragment() {
 
                 // Update courts list RecyclerView (uncomment and implement CourtStatusAdapter)
                 adapter.setItems(court.base.courtStatus)
-
-
-                // Update map image
-                 CourtRepository.loadMapPhoto(court, view.findViewById(R.id.map_image))
             }
         }
+
         val editCourtButton : Button = view.findViewById(R.id.edit_court_button)
         editCourtButton.setOnClickListener {
             val args = Bundle().apply {
@@ -131,10 +159,62 @@ class CourtDetailFragment : Fragment() {
         }
     }
 
+    private fun setLastVerified(court : Court) {
+        val millis = court.base.lastUpdate
+        var remainingMillis = System.currentTimeMillis() - millis
+
+        val minutesInMilli = 60 * 1000L
+        val hoursInMilli = 60 * minutesInMilli
+        val daysInMilli = 24 * hoursInMilli
+        val yearsInMilli = 365 * daysInMilli  // approximate
+
+        val years = remainingMillis / yearsInMilli
+        remainingMillis %= yearsInMilli
+
+        val days = remainingMillis / daysInMilli
+        remainingMillis %= daysInMilli
+
+        val hours = remainingMillis / hoursInMilli
+        remainingMillis %= hoursInMilli
+
+        val minutes = remainingMillis / minutesInMilli
+
+        val parts = mutableListOf<String>()
+        parts.add("Last Verified:")
+
+        if (years > 0) parts.add("$years year${if (years > 1) "s" else ""}")
+        if (days > 0) parts.add("$days day${if (days > 1) "s" else ""}")
+
+        // Always show minutes if there are years or days
+        if (years > 0 || days > 0 || minutes > 0) {
+            val totalMinutes = if (years > 0 || days > 0) {
+                // include leftover hours as minutes
+                minutes + hours * 60
+            } else {
+                minutes
+            }
+            parts.add("$totalMinutes minute${if (totalMinutes > 1) "s" else ""}")
+        }
+        parts.add("ago")
+        Log.d("debug", parts.joinToString(" "))
+        lastVerifiedTextView.text = parts.joinToString(" ")
+    }
+
 
     private fun startNotificationService() {
         //stuff
     }
+
+    override fun onMapReady(map: GoogleMap) {
+        this@CourtDetailFragment.map = map
+        // The Lite Mode map is automatically unresponsive.
+        Log.d("map", "map loaded")
+        pendingLatLng?.let {
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(it, 15f))
+            map.addMarker(MarkerOptions().position(it))
+        }
+    }
+
 
     companion object {
         fun newInstance(documentId: String): CourtDetailFragment {
