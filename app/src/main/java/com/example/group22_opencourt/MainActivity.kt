@@ -8,6 +8,8 @@ import android.location.LocationManager
 import android.location.LocationListener
 import android.os.Build
 import android.os.Bundle
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -24,6 +26,7 @@ import androidx.navigation.findNavController
 import com.example.group22_opencourt.databinding.ActivityMainBinding
 import com.google.android.libraries.places.api.Places
 import com.google.firebase.auth.FirebaseAuth
+import org.w3c.dom.Text
 
 
 class MainActivity : AppCompatActivity(), LocationListener {
@@ -59,6 +62,11 @@ class MainActivity : AppCompatActivity(), LocationListener {
 //
         // Set up bottom navigation with NavController
         binding.bottomNav.setupWithNavController(navController)
+
+        navController.addOnDestinationChangedListener { controller, destination, arguments ->
+            // This runs on every navigation event
+            hideToolBarButton()
+        }
 
         binding.bottomNav.setOnItemSelectedListener { item ->
             val currentDestId = navController.currentDestination?.id
@@ -187,5 +195,17 @@ class MainActivity : AppCompatActivity(), LocationListener {
 
     fun hideBackButton() {
         binding.toolbar.navigationIcon = null
+    }
+
+    fun showToolBarButton(text : String, onClick : () -> Unit) {
+        binding.toolbarButton.visibility = VISIBLE
+        binding.toolbarButton.text = text
+        binding.toolbarButton.setOnClickListener {
+            onClick()
+        }
+    }
+
+    fun hideToolBarButton() {
+        binding.toolbarButton.visibility = GONE
     }
 }
