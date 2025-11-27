@@ -1,6 +1,7 @@
 package com.example.group22_opencourt.ui.main
 
 import android.location.Location
+import android.provider.ContactsContract
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -14,6 +15,7 @@ import com.example.group22_opencourt.R
 import com.example.group22_opencourt.databinding.HomeFragmentItemBinding
 import com.example.group22_opencourt.model.BasketballCourt
 import com.example.group22_opencourt.model.Court
+import com.example.group22_opencourt.model.ImagesRepository
 import com.example.group22_opencourt.model.TennisCourt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -86,15 +88,17 @@ class HomeRecyclerViewAdapter(
 
         when (court) {
             is BasketballCourt -> {
-                if (court.base.photoURL.isNotEmpty()){
-                    CourtRepository.loadPhoto(court, holder.imageView)
+                if (court.base.photoUri.isNotEmpty()){
+                    ImagesRepository.instance.loadCourtPhoto(
+                        holder.imageView.context, court.base.photoUri, holder.imageView)
                 } else {
                     holder.imageView.setImageResource(R.drawable.basketballcourtexample)
                 }
 
             }
-            is TennisCourt ->  if (court.base.photoURL.isNotEmpty()){
-                CourtRepository.loadPhoto(court, holder.imageView)
+            is TennisCourt ->  if (court.base.photoUri.isNotEmpty()){
+                ImagesRepository.instance.loadCourtPhoto(
+                    holder.imageView.context, court.base.photoUri, holder.imageView)
             } else {
                 holder.imageView.setImageResource(R.drawable.example_tennis_court)
             }

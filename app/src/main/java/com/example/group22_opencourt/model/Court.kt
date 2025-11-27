@@ -15,8 +15,10 @@ data class CourtBase(
     var totalCourts: Int = 1,
     var courtsAvailable: Int = 1,
     var placesId : String = "",
-    var photoURL: String = "",
+    var photoUri: String = "",
+    var photoURL : String = "",
     var courtStatus: ArrayList<CourtStatus> = ArrayList(),
+    var lastUpdate : Long = 0,
     var geoPoint: GeoPoint? = null
 )
 

@@ -14,16 +14,22 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.group22_opencourt.BuildConfig
 import com.example.group22_opencourt.MainActivity
 import com.example.group22_opencourt.R
 import com.example.group22_opencourt.databinding.FragmentHomeBinding
 import com.example.group22_opencourt.model.BasketballCourt
 import com.example.group22_opencourt.model.Court
+import com.example.group22_opencourt.model.ImagesRepository
 import com.example.group22_opencourt.model.TennisCourt
 import com.example.group22_opencourt.ui.main.HomeRecyclerViewAdapter.ViewHolder
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.libraries.places.api.Places
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
 
 class HomeFragment : Fragment() {
@@ -78,6 +84,14 @@ class HomeFragment : Fragment() {
         // Observe courts from ViewModel and update adapter
         viewModel.courts.observe(viewLifecycleOwner) { courts ->
             this@HomeFragment.courts = courts
+            lifecycleScope.launch {
+                withContext(Dispatchers.IO) {
+                    courts.forEach {
+                        ImagesRepository.instance.ensurePhotoForPlace(requireContext(), it)
+                    }
+                }
+
+            }
             Log.d("debug", "filter called from observer $lastUserLocation")
             applyAllFilters() {
                 Log.d("debug", "onsuccess")

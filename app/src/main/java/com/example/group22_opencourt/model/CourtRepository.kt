@@ -7,6 +7,7 @@ import com.example.group22_opencourt.model.Court
 import com.example.group22_opencourt.model.TennisCourt
 import com.example.group22_opencourt.model.BasketballCourt
 import com.example.group22_opencourt.model.FirestoreDocumentLiveData
+import com.example.group22_opencourt.model.ImagesRepository
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.*
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +20,7 @@ import java.net.URLEncoder
 class CourtRepository private constructor() {
 
     private val db = Firebase.firestore
-    private val courtsCollection = db.collection("courts")
+    private val courtsCollection = db.collection("courts2")
 
     private val _courts = MutableLiveData<List<Court>>()
     val courts: LiveData<List<Court>> = _courts
@@ -110,13 +111,13 @@ class CourtRepository private constructor() {
         val instance: CourtRepository by lazy { CourtRepository() }
 
         fun loadPhoto(court : Court, imageView : ImageView) {
-            if (court.base.photoURL.isEmpty()) {
+            if (court.base.photoUri.isEmpty()) {
                 return
             }
             val photoUrl =
                 "https://maps.googleapis.com/maps/api/place/photo" +
                         "?maxwidth=400" +
-                        "&photoreference=${court.base.photoURL}" +
+                        "&photoreference=${court.base.photoUri}" +
                         "&key=${BuildConfig.MAPS_API_KEY}"
             Glide.with(imageView.context)
                 .load(photoUrl)

@@ -53,9 +53,6 @@ class MainActivity : AppCompatActivity(), LocationListener {
         } else {
             checkPermissions()
         }
-        if (!Places.isInitialized()) {
-            Places.initialize(applicationContext, BuildConfig.MAPS_API_KEY)
-        }
         //        // Set up NavController from NavHostFragment
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         navController = navHostFragment.navController

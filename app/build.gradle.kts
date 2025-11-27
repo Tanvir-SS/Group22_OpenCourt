@@ -59,7 +59,6 @@ android {
 dependencies {
     implementation(libs.play.services.location)
     implementation(libs.googleid)
-    implementation(libs.firebase.storage.ktx)
     val room_version = "2.8.3"
     ksp("androidx.room:room-compiler:$room_version")
     implementation("androidx.room:room-ktx:${room_version}")
@@ -107,5 +106,4 @@ dependencies {
 
     implementation("com.google.android.libraries.places:places:3.5.0")
 
-    implementation("com.google.firebase:firebase-storage")
 }
