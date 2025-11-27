@@ -28,6 +28,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+//for weather
+
+import android.location.Geocoder
+import android.widget.ProgressBar
+import android.widget.TextView
+import java.util.Locale
 
 class CourtDetailFragment : Fragment() {
     private lateinit var viewModel: CourtDetailViewModel
@@ -36,6 +42,10 @@ class CourtDetailFragment : Fragment() {
     private lateinit var adapter: CourtStatusAdapter
 
     private var documentId = ""
+
+    private var lastWeatherAddress: String? = null
+
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -56,6 +66,37 @@ class CourtDetailFragment : Fragment() {
         courtsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         adapter = CourtStatusAdapter(emptyList(), lifecycleScope)
         courtsRecyclerView.adapter = adapter
+
+        //Weather UI (NEW)
+        val weatherValue = view.findViewById<android.widget.TextView>(R.id.weather_value)
+        val weatherProgress = view.findViewById<android.widget.ProgressBar>(R.id.weather_progress)
+
+        // Used to avoid geocoding + refetching repeatedly for the same court/address
+        var lastWeatherAddress: String? = null
+
+        viewModel.weather.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is WeatherUiState.Idle -> {
+                    weatherProgress.visibility = View.GONE
+                    weatherValue.text = "—"
+                }
+                is WeatherUiState.Loading -> {
+                    weatherProgress.visibility = View.VISIBLE
+                    weatherValue.text = "Loading…"
+                }
+                is WeatherUiState.Ready -> {
+                    weatherProgress.visibility = View.GONE
+                    val w = state.weather
+                    weatherValue.text = "${w.tempC}°C · ${w.description} · Wind ${w.windKmh} km/h"
+                }
+                is WeatherUiState.Error -> {
+                    weatherProgress.visibility = View.GONE
+                    weatherValue.text = state.message
+                }
+            }
+        }
+
+
         viewModel.courtLiveData.observe(viewLifecycleOwner) { court ->
             Log.d("debug", "message")
             if (court != null) {
@@ -108,6 +149,32 @@ class CourtDetailFragment : Fragment() {
 
                 // Update map image
                  CourtRepository.loadMapPhoto(court, view.findViewById(R.id.map_image))
+
+                // Weather fetch trigger
+                val addr = court.base.address
+                if (addr.isNotBlank() && addr != lastWeatherAddress) {
+                    lastWeatherAddress = addr
+                    viewModel.setWeatherLoading()
+
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        val latLon: Pair<Double, Double>? = try {
+                            val geocoder = android.location.Geocoder(requireContext(), java.util.Locale.getDefault())
+                            val results = geocoder.getFromLocationName(addr, 1)
+                            val loc = results?.firstOrNull()
+                            if (loc != null) Pair(loc.latitude, loc.longitude) else null
+                        } catch (_: Exception) {
+                            null
+                        }
+
+                        withContext(Dispatchers.Main) {
+                            if (latLon == null) {
+                                viewModel.setWeatherError("Weather unavailable")
+                            } else {
+                                viewModel.loadWeather(latLon.first, latLon.second)
+                            }
+                        }
+                    }
+                }
             }
         }
         val editCourtButton : Button = view.findViewById(R.id.edit_court_button)
@@ -130,6 +197,18 @@ class CourtDetailFragment : Fragment() {
             activity.showBackButton()
         }
     }
+
+    private fun geocodeAddress(address: String): Pair<Double, Double>? {
+        return try {
+            val geocoder = android.location.Geocoder(requireContext(), java.util.Locale.getDefault())
+            val results = geocoder.getFromLocationName(address, 1)
+            val loc = results?.firstOrNull() ?: return null
+            loc.latitude to loc.longitude
+        } catch (_: Exception) {
+            null
+        }
+    }
+
 
 
     private fun startNotificationService() {
