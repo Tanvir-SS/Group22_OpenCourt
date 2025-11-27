@@ -23,7 +23,7 @@
             android:gravity="center_vertical">
 
             <TextView
-                android:id="@+id/court_title"
+                android:id="@+id/edit_court_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -35,7 +35,7 @@
 
         <!-- Address -->
         <TextView
-            android:id="@+id/court_address"
+            android:id="@+id/edit_court_address"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Address, Example Street, Burnaby BC"
@@ -45,7 +45,7 @@
 
         <!-- Last Verified -->
         <TextView
-            android:id="@+id/last_verified"
+            android:id="@+id/edit_last_verified"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Last Verified: 10 min ago"
@@ -80,6 +80,9 @@
 
 
                 <LinearLayout
+                    android:id="@+id/edit_lights_layout"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -104,6 +107,9 @@
                     android:layout_height="1dp"
                     android:background="@color/oc_border_line" />
                 <LinearLayout
+                    android:id="@+id/edit_indoor_layout"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -128,6 +134,9 @@
                     android:layout_height="1dp"
                     android:background="@color/oc_border_line" />
                 <LinearLayout
+                    android:id="@+id/edit_washrooms_layout"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -152,6 +161,9 @@
                     android:layout_height="1dp"
                     android:background="@color/oc_border_line" />
                 <LinearLayout
+                    android:id="@+id/edit_accessibility_layout"
+                    android:clickable="true"
+                    android:focusable="true"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -184,6 +196,8 @@
 
             <LinearLayout
                 android:id="@+id/edit_layoutTennisAmenities"
+                android:clickable="true"
+                android:focusable="true"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
@@ -225,6 +239,8 @@
 
             <LinearLayout
                 android:id="@+id/edit_layoutBasketballAmenities"
+                android:clickable="true"
+                android:focusable="true"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
