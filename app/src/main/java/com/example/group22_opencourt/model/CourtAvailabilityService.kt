@@ -13,6 +13,9 @@ import com.example.group22_opencourt.R
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.FirebaseFirestore
 
+import android.app.PendingIntent
+
+
 
 class CourtAvailabilityService : Service() {
 
@@ -38,6 +41,11 @@ class CourtAvailabilityService : Service() {
 
         startListening(collection, docId, courtName)
         return START_STICKY
+
+        if (intent?.action == ACTION_STOP) {
+            cleanupAndStop()
+            return START_NOT_STICKY
+        }
     }
 
     private fun startListening(collection: String, docId: String, courtName: String) {
@@ -74,11 +82,29 @@ class CourtAvailabilityService : Service() {
     }
 
     private fun buildForegroundNotification(courtName: String): Notification {
+        val stopIntent = Intent(this, CourtAvailabilityService::class.java).apply {
+            action = ACTION_STOP
+        }
+
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
+        }
+
+        val stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, flags)
+
         return NotificationCompat.Builder(this, CHANNEL_FOREGROUND)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Watching Court Availability")
+            .setContentTitle("Watching court availability")
             .setContentText("Monitoring $courtName…")
             .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .addAction(
+                android.R.drawable.ic_menu_close_clear_cancel,
+                "Stop",
+                stopPendingIntent
+            )
             .build()
     }
 
@@ -126,5 +152,8 @@ class CourtAvailabilityService : Service() {
         private const val CHANNEL_ALERTS = "court_alerts"
         private const val FOREGROUND_ID = 1001
         private const val ALERT_ID = 2001
+
+        private const val ACTION_STOP = "com.example.group22_opencourt.STOP_MONITORING"
+
     }
 }
