@@ -3,6 +3,7 @@ package com.example.group22_opencourt.model
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Log
 import android.widget.ImageView
 import com.bumptech.glide.Glide
 import com.example.group22_opencourt.BuildConfig
@@ -12,7 +13,9 @@ import com.google.android.libraries.places.api.net.FetchPhotoRequest
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.FetchResolvedPhotoUriRequest
 import com.google.android.libraries.places.api.net.FetchResolvedPhotoUriResponse
+import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
 import com.google.android.libraries.places.api.net.PlacesClient
+import com.google.firebase.firestore.GeoPoint
 import java.io.ByteArrayOutputStream
 import kotlin.coroutines.resume
 
@@ -36,6 +39,77 @@ class ImagesRepository {
             .into(imageView)
     }
 
+    suspend fun getCourtDetailsFromAddress(context : Context, address: String) : Triple<GeoPoint?, String, String>? {
+        if (!Places.isInitialized()) {
+            Places.initializeWithNewPlacesApiEnabled(context.getApplicationContext(), BuildConfig.MAPS_API_KEY)
+            placesClient = Places.createClient(context.applicationContext)
+        }
+        if (!(::placesClient.isInitialized)){
+            placesClient = Places.createClient(context.applicationContext)
+        }
+        val placeId : String? = searchPlace(address)
+        if (placeId == null) {
+            return null
+        }
+        return fetchPlaceDetails(placeId)
+    }
+
+    suspend fun searchPlace(query: String) : String? {
+        return suspendCoroutine { cont ->
+            val request = FindAutocompletePredictionsRequest.builder()
+                .setQuery(query)
+                .build()
+
+            placesClient.findAutocompletePredictions(request)
+                .addOnSuccessListener { response ->
+                    if (response.autocompletePredictions.isEmpty()) {
+                        cont.resume(null)
+                        return@addOnSuccessListener
+                    }
+
+                    // Take the first result
+                    val prediction = response.autocompletePredictions[0]
+                    val placeId = prediction.placeId
+
+                    cont.resume(placeId)
+                }
+                .addOnFailureListener {
+                    cont.resume(null)
+                }
+
+        }
+    }
+
+    private suspend fun fetchPlaceDetails(placeId: String) : Triple<GeoPoint?, String, String>? {
+        return suspendCoroutine { cont ->
+            val fields = listOf(
+                Place.Field.ID,
+                Place.Field.ADDRESS,
+                Place.Field.LAT_LNG,
+            )
+
+            val request = FetchPlaceRequest.newInstance(placeId, fields)
+
+            placesClient.fetchPlace(request)
+                .addOnSuccessListener { response ->
+                    val place = response.place
+                    val placeId = place.id ?: ""
+                    val address = place.address ?: ""
+                    val lat = place.latLng?.latitude ?: 0.0
+                    val lng = place.latLng?.longitude ?: 0.0
+                    var geoPoint : GeoPoint? = GeoPoint(lat, lng)
+                    if (lat == 0.0 && lng == 0.0) {
+                        geoPoint = null
+                    }
+                    cont.resume(Triple(geoPoint, placeId, address))
+                }
+                .addOnFailureListener {
+                    cont.resume(null)
+                }
+        }
+
+    }
+
     suspend fun ensurePhotoForPlace(context : Context, court: Court) {
         if (!Places.isInitialized()) {
             Places.initializeWithNewPlacesApiEnabled(context.getApplicationContext(), BuildConfig.MAPS_API_KEY)
@@ -47,6 +121,7 @@ class ImagesRepository {
         // If already has local/remote photoUri → done
         if (!court.base.photoUri.isEmpty()) return
 
+        Log.d("fetching", "court ${court.base.name}")
         // Fetch from Places
         val uri = fetchPlacePhotoUri(context, court.base.placesId)
         var uriStr = uri.toString()
@@ -77,8 +152,8 @@ class ImagesRepository {
 
                     // Step 2: Build FetchPhotoRequest
                     val photoRequest = FetchResolvedPhotoUriRequest.builder(metadata)
-                        .setMaxWidth(800)
-                        .setMaxHeight(800)
+                        .setMaxWidth(400)
+                        .setMaxHeight(400)
                         .build()
 
 // Step 3: Fetch resolved URI

@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.group22_opencourt.R
 import com.example.group22_opencourt.model.BasketballCourt
 import com.example.group22_opencourt.model.CourtBase
+import com.example.group22_opencourt.model.ImagesRepository
 import com.example.group22_opencourt.model.TennisCourt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -158,14 +159,16 @@ class AddCourtFragment : Fragment() {
                 lights = lights,
                 accessibility = accessibility,
                 totalCourts = totalCourts,
-                courtsAvailable = totalCourts
+                courtsAvailable = totalCourts,
+                lastUpdate = System.currentTimeMillis()
             )
             val repository = CourtRepository.instance
             lifecycleScope.launch {
-                val result = CourtRepository.getGeoPointFromAddress(base.address)
+                val result = ImagesRepository.instance.getCourtDetailsFromAddress(requireContext().applicationContext, name + " " + address)
                 if (result != null) {
-                    val (geoPoint, formatted) = result
+                    val (geoPoint, placeId, formatted) = result
                     base.address = formatted
+                    base.placesId = placeId
                     base.geoPoint = geoPoint
                     when (courtTypeSpinner.selectedItemPosition) {
                         0 -> {
