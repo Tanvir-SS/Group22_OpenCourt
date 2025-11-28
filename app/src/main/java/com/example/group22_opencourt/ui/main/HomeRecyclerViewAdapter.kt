@@ -88,7 +88,7 @@ class HomeRecyclerViewAdapter(
 
         when (court) {
             is BasketballCourt -> {
-                if (court.base.photoUri.isNotEmpty()){
+                if (court.base.photoUri.isNotEmpty() && court.base.photoUri != ImagesRepository.URI_NON_EXIST){
                     ImagesRepository.instance.loadCourtPhoto(
                         holder.imageView.context, court.base.photoUri, holder.imageView)
                 } else {
@@ -96,11 +96,14 @@ class HomeRecyclerViewAdapter(
                 }
 
             }
-            is TennisCourt ->  if (court.base.photoUri.isNotEmpty()){
-                ImagesRepository.instance.loadCourtPhoto(
-                    holder.imageView.context, court.base.photoUri, holder.imageView)
-            } else {
-                holder.imageView.setImageResource(R.drawable.example_tennis_court)
+            is TennisCourt -> {
+                if (court.base.photoUri.isNotEmpty() && court.base.photoUri != ImagesRepository.URI_NON_EXIST) {
+                    ImagesRepository.instance.loadCourtPhoto(
+                        holder.imageView.context, court.base.photoUri, holder.imageView
+                    )
+                } else {
+                    holder.imageView.setImageResource(R.drawable.example_tennis_court)
+                }
             }
         }
         val iconRes = when (court.type) {

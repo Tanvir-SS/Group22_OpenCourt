@@ -86,8 +86,9 @@ class HomeFragment : Fragment() {
             this@HomeFragment.courts = courts
             lifecycleScope.launch {
                 withContext(Dispatchers.IO) {
+                    val ctx = context ?: return@withContext
                     courts.forEach {
-                        ImagesRepository.instance.ensurePhotoForPlace(requireContext(), it)
+                        ImagesRepository.instance.ensurePhotoForPlace(ctx, it)
                     }
                 }
 

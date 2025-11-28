@@ -22,6 +22,7 @@ import android.widget.AdapterView
 import android.widget.Toast
 import android.widget.Button
 import android.widget.ImageView
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.example.group22_opencourt.R
 import com.example.group22_opencourt.model.BasketballCourt
@@ -51,15 +52,16 @@ class AddCourtFragment : Fragment() {
     private lateinit var checkboxPracticeWall: CheckBox
     private lateinit var checkboxNets: CheckBox
 
+    private lateinit var buttonRemovePhoto : Button
+
     private var allowAdd = true
 
     // Photo UI
     private lateinit var addPhotoButton: Button
     private lateinit var courtPhotoImageView: ImageView
 
-    // Image state
-    private var selectedImageUri: Uri? = null
-    private var currentPhotoUri: Uri? = null
+    // ViewModel to hold image state
+    private val viewModel: AddCourtViewModel by viewModels()
 
     // Activity result launchers
     private lateinit var takePictureLauncher: ActivityResultLauncher<Uri>
@@ -87,11 +89,8 @@ class AddCourtFragment : Fragment() {
             ActivityResultContracts.TakePicture()
         ) { success ->
             if (success) {
-                currentPhotoUri?.let { uri ->
-                    selectedImageUri = uri
-                    courtPhotoImageView.visibility = View.VISIBLE
-                    courtPhotoImageView.setImageURI(uri)
-                }
+                // Notify ViewModel that camera photo was captured
+                viewModel.onCameraPhotoCaptured()
             } else {
                 Toast.makeText(requireContext(), "Failed to take photo", Toast.LENGTH_SHORT).show()
             }
@@ -101,9 +100,8 @@ class AddCourtFragment : Fragment() {
             ActivityResultContracts.PickVisualMedia()
         ) { uri ->
             if (uri != null) {
-                selectedImageUri = uri
-                courtPhotoImageView.visibility = View.VISIBLE
-                courtPhotoImageView.setImageURI(uri)
+                // Update ViewModel with picked image
+                viewModel.onGalleryImagePicked(uri)
             }
         }
     }
@@ -142,14 +140,16 @@ class AddCourtFragment : Fragment() {
 
     private fun launchCamera() {
         val ctx = requireContext()
-        val photoFile = File.createTempFile(
-            "court_photo_",
-            ".jpg",
-            ctx.getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)
+        val photoFile = File(
+            ctx.getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES),
+            "court_photo_"
         )
         val authority = ctx.packageName + ".fileprovider"
         val uri = FileProvider.getUriForFile(ctx, authority, photoFile)
-        currentPhotoUri = uri
+
+        // Store prepared URI in ViewModel
+        viewModel.onCameraPhotoPrepared(uri)
+
         takePictureLauncher.launch(uri)
     }
 
@@ -175,6 +175,7 @@ class AddCourtFragment : Fragment() {
         // Photo views
         addPhotoButton = view.findViewById(R.id.buttonAddPhoto)
         courtPhotoImageView = view.findViewById(R.id.imageViewCourtPhoto)
+        buttonRemovePhoto = view.findViewById(R.id.buttonRemovePhoto)
 
         // Set up spinner adapter explicitly (even with entries) to ensure control over items
         ArrayAdapter.createFromResource(
@@ -213,6 +214,10 @@ class AddCourtFragment : Fragment() {
             showPhotoSourceChooser()
         }
 
+        buttonRemovePhoto.setOnClickListener {
+            viewModel.clearImage()
+        }
+
         // Existing layout click listeners now only for text inputs
         view.findViewById<View>(R.id.layoutCourtName).setOnClickListener {
             showKeyboard(courtNameEditText)
@@ -245,6 +250,23 @@ class AddCourtFragment : Fragment() {
         clearCourtName.setOnClickListener { courtNameEditText.text.clear() }
         clearAddress.setOnClickListener { addressEditText.text.clear() }
         clearNumCourts.setOnClickListener { numCourtsEditText.text.clear() }
+
+        // Observe selected image URI; user will handle UI logic
+        viewModel.selectedImageUri.observe(viewLifecycleOwner) { uri ->
+             courtPhotoImageView.setImageDrawable(null)
+             if (uri != null) {
+                 courtPhotoImageView.visibility = View.VISIBLE
+                 courtPhotoImageView.setImageURI(uri)
+                 addPhotoButton.text = "Update Photo"
+                 buttonRemovePhoto.visibility = View.VISIBLE
+
+
+             } else {
+                 courtPhotoImageView.visibility = View.GONE
+                 addPhotoButton.text = "Add Photo"
+                 buttonRemovePhoto.visibility = View.GONE
+             }
+        }
 
         // Apply button: construct proper Court object (Tennis or Basketball)
         view.findViewById<View>(R.id.buttonApply).setOnClickListener {
@@ -335,9 +357,10 @@ class AddCourtFragment : Fragment() {
         layoutTennisAmenities.visibility = View.VISIBLE
         layoutBasketballAmenities.visibility = View.GONE
 
-        // Image state
-        selectedImageUri = null
-        currentPhotoUri = null
+        // Reset image state via ViewModel
+        viewModel.clearImage()
+
+        // Optionally reset ImageView UI here (user may prefer to rely on observer)
         courtPhotoImageView.setImageDrawable(null)
         courtPhotoImageView.visibility = View.GONE
     }
