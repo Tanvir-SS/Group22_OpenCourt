@@ -68,6 +68,8 @@ class AddCourtFragment : Fragment() {
     private lateinit var pickMediaLauncher: ActivityResultLauncher<PickVisualMediaRequest>
     private lateinit var requestCameraPermissionLauncher: ActivityResultLauncher<String>
 
+    private var uriToFireStore : Uri? = null
+
     private fun showKeyboard(editText: android.widget.EditText) {
         editText.requestFocus()
         val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -254,6 +256,7 @@ class AddCourtFragment : Fragment() {
         // Observe selected image URI; user will handle UI logic
         viewModel.selectedImageUri.observe(viewLifecycleOwner) { uri ->
              courtPhotoImageView.setImageDrawable(null)
+            uriToFireStore = uri
              if (uri != null) {
                  courtPhotoImageView.visibility = View.VISIBLE
                  courtPhotoImageView.setImageURI(uri)
@@ -298,6 +301,14 @@ class AddCourtFragment : Fragment() {
             lifecycleScope.launch {
                 val result = ImagesRepository.instance.getCourtDetailsFromAddress(requireContext().applicationContext, name + " " + address)
                 if (result != null) {
+                    val uri = uriToFireStore
+                    if (uri != null) {
+                        base.photoUri = ImagesRepository.instance.uploadPhotoToFirebase(base.name, uri)
+                        if (base.photoUri == ImagesRepository.FAIl) {
+                            Toast.makeText(requireContext(), "Court failed to uploaded", Toast.LENGTH_SHORT).show()
+                            return@launch
+                        }
+                    }
                     val (geoPoint, placeId, formatted) = result
                     base.address = formatted
                     base.placesId = placeId

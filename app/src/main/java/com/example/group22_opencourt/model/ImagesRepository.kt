@@ -19,6 +19,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.storage
+import kotlinx.coroutines.tasks.await
 import java.io.ByteArrayOutputStream
 import kotlin.coroutines.resume
 
@@ -30,10 +31,12 @@ class ImagesRepository {
     private lateinit var placesClient: PlacesClient
 
     private val storage = Firebase.storage
-    val rootRef = storage.reference
+    private val rootRef = storage.reference
     companion object {
         val instance: ImagesRepository by lazy { ImagesRepository() }
         val URI_NON_EXIST = "NO_PHOTO"
+
+        val FAIl = "fail"
 
     }
     fun loadCourtPhoto(context: Context, photoUri: String?, imageView: ImageView) {
@@ -190,21 +193,14 @@ class ImagesRepository {
         }
 
 
-//        private suspend fun uploadPhotoToFirebase(courtId: String, bitmap: Bitmap): Uri? =
-//        suspendCoroutine { cont ->
-//            val imagesRef = rootRef.child("images/$courtId.jpg")
-//
-//
-//            val baos = ByteArrayOutputStream()
-//            bitmap.compress(Bitmap.CompressFormat.JPEG, 85, baos)
-//            val data = baos.toByteArray()
-//
-//            storageRef.putBytes(data)
-//                .continueWithTask { task ->
-//                    if (!task.isSuccessful) throw task.exception ?: Exception("Upload error")
-//                    storageRef.downloadUrl
-//                }
-//                .addOnSuccessListener { uri -> cont.resume(uri) }
-//                .addOnFailureListener { cont.resume(null) }
-//        }
+    suspend fun uploadPhotoToFirebase(prefix: String, photoUri : Uri): String {
+        try {
+            val photosRef = rootRef.child("user_photos/${prefix}${System.currentTimeMillis()}.jpg")
+            photosRef.putFile(photoUri).await()
+            return photosRef.downloadUrl.await().toString()
+        } catch (e : Exception) {
+            return FAIl
+        }
+    }
+
 }
