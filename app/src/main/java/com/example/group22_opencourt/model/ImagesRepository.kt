@@ -15,7 +15,10 @@ import com.google.android.libraries.places.api.net.FetchResolvedPhotoUriRequest
 import com.google.android.libraries.places.api.net.FetchResolvedPhotoUriResponse
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
 import com.google.android.libraries.places.api.net.PlacesClient
+import com.google.firebase.Firebase
 import com.google.firebase.firestore.GeoPoint
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.storage
 import java.io.ByteArrayOutputStream
 import kotlin.coroutines.resume
 
@@ -25,6 +28,9 @@ import kotlin.coroutines.suspendCoroutine
 class ImagesRepository {
 
     private lateinit var placesClient: PlacesClient
+
+    private val storage = Firebase.storage
+    val rootRef = storage.reference
     companion object {
         val instance: ImagesRepository by lazy { ImagesRepository() }
         val URI_NON_EXIST = "NO_PHOTO"
@@ -171,13 +177,23 @@ class ImagesRepository {
                 }
         }
 
+    private suspend fun updatePhotoUriInFirestore(court: Court, uri: String): Boolean =
+        suspendCoroutine { cont ->
+            court.base.photoUri = uri
+            CourtRepository.instance.updateCourt(court) {
+                if (it) {
+                    cont.resume(true)
+                } else {
+                    cont.resume(false)
+                }
+            }
+        }
 
-//    private suspend fun uploadPhotoToFirebase(placeId: String, bitmap: Bitmap): Uri? =
+
+//        private suspend fun uploadPhotoToFirebase(courtId: String, bitmap: Bitmap): Uri? =
 //        suspendCoroutine { cont ->
+//            val imagesRef = rootRef.child("images/$courtId.jpg")
 //
-//            val storageRef = FirebaseStorage.getInstance()
-//                .reference
-//                .child("place_photos/$placeId.jpg")
 //
 //            val baos = ByteArrayOutputStream()
 //            bitmap.compress(Bitmap.CompressFormat.JPEG, 85, baos)
@@ -191,15 +207,4 @@ class ImagesRepository {
 //                .addOnSuccessListener { uri -> cont.resume(uri) }
 //                .addOnFailureListener { cont.resume(null) }
 //        }
-    private suspend fun updatePhotoUriInFirestore(court: Court, uri: String): Boolean =
-        suspendCoroutine { cont ->
-            court.base.photoUri = uri
-            CourtRepository.instance.updateCourt(court) {
-                if (it) {
-                    cont.resume(true)
-                } else {
-                    cont.resume(false)
-                }
-            }
-        }
 }

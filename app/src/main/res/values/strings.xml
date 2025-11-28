@@ -27,6 +27,8 @@
     <string name="apply">Apply</string>
     <string name="clear">Clear</string>
     <string name="court_details">Court Details</string>
+    <string name="court_photo">Court Photo</string>
+    <string name="add_photo">Add Photo</string>
 
     <!-- SettingsFragment -->
     <string name="account">Account</string>

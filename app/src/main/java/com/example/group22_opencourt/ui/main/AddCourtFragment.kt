@@ -1,7 +1,14 @@
 package com.example.group22_opencourt.ui.main
 
+import android.Manifest
 import android.content.Context
+import android.net.Uri
 import android.os.Bundle
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -13,25 +20,26 @@ import android.widget.Spinner
 import android.widget.ArrayAdapter
 import android.widget.AdapterView
 import android.widget.Toast
+import android.widget.Button
+import android.widget.ImageView
 import androidx.lifecycle.lifecycleScope
 import com.example.group22_opencourt.R
 import com.example.group22_opencourt.model.BasketballCourt
 import com.example.group22_opencourt.model.CourtBase
 import com.example.group22_opencourt.model.ImagesRepository
 import com.example.group22_opencourt.model.TennisCourt
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import java.io.File
 import kotlin.text.clear
 
 class AddCourtFragment : Fragment() {
     private lateinit var courtNameEditText: android.widget.EditText
-    private lateinit var clearCourtName: android.widget.ImageView
+    private lateinit var clearCourtName: ImageView
     private lateinit var courtTypeSpinner: Spinner
     private lateinit var addressEditText: android.widget.EditText
-    private lateinit var clearAddress: android.widget.ImageView
+    private lateinit var clearAddress: ImageView
     private lateinit var numCourtsEditText: android.widget.EditText
-    private lateinit var clearNumCourts: android.widget.ImageView
+    private lateinit var clearNumCourts: ImageView
 
     private lateinit var checkboxLights: CheckBox
     private lateinit var checkboxIndoor: CheckBox
@@ -45,10 +53,104 @@ class AddCourtFragment : Fragment() {
 
     private var allowAdd = true
 
+    // Photo UI
+    private lateinit var addPhotoButton: Button
+    private lateinit var courtPhotoImageView: ImageView
+
+    // Image state
+    private var selectedImageUri: Uri? = null
+    private var currentPhotoUri: Uri? = null
+
+    // Activity result launchers
+    private lateinit var takePictureLauncher: ActivityResultLauncher<Uri>
+    private lateinit var pickMediaLauncher: ActivityResultLauncher<PickVisualMediaRequest>
+    private lateinit var requestCameraPermissionLauncher: ActivityResultLauncher<String>
+
     private fun showKeyboard(editText: android.widget.EditText) {
         editText.requestFocus()
         val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT)
+    }
+
+    private fun initActivityResultLaunchers() {
+        requestCameraPermissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { granted ->
+            if (granted) {
+                launchCamera()
+            } else {
+                Toast.makeText(requireContext(), "Camera permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        takePictureLauncher = registerForActivityResult(
+            ActivityResultContracts.TakePicture()
+        ) { success ->
+            if (success) {
+                currentPhotoUri?.let { uri ->
+                    selectedImageUri = uri
+                    courtPhotoImageView.visibility = View.VISIBLE
+                    courtPhotoImageView.setImageURI(uri)
+                }
+            } else {
+                Toast.makeText(requireContext(), "Failed to take photo", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        pickMediaLauncher = registerForActivityResult(
+            ActivityResultContracts.PickVisualMedia()
+        ) { uri ->
+            if (uri != null) {
+                selectedImageUri = uri
+                courtPhotoImageView.visibility = View.VISIBLE
+                courtPhotoImageView.setImageURI(uri)
+            }
+        }
+    }
+
+    private fun showPhotoSourceChooser() {
+        val options = arrayOf("Take photo", "Use gallery")
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle("Add photo")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> startCameraFlow()
+                    1 -> launchGalleryPicker()
+                }
+            }
+            .show()
+    }
+
+    private fun startCameraFlow() {
+        val hasPermission = ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.CAMERA
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+        if (hasPermission) {
+            launchCamera()
+        } else {
+            requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    private fun launchGalleryPicker() {
+        pickMediaLauncher.launch(
+            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+        )
+    }
+
+    private fun launchCamera() {
+        val ctx = requireContext()
+        val photoFile = File.createTempFile(
+            "court_photo_",
+            ".jpg",
+            ctx.getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)
+        )
+        val authority = ctx.packageName + ".fileprovider"
+        val uri = FileProvider.getUriForFile(ctx, authority, photoFile)
+        currentPhotoUri = uri
+        takePictureLauncher.launch(uri)
     }
 
     private fun initViews(view: View) {
@@ -69,6 +171,10 @@ class AddCourtFragment : Fragment() {
         layoutBasketballAmenities = view.findViewById(R.id.layoutBasketballAmenities)
         checkboxPracticeWall = view.findViewById(R.id.checkboxPracticeWall)
         checkboxNets = view.findViewById(R.id.checkboxNets)
+
+        // Photo views
+        addPhotoButton = view.findViewById(R.id.buttonAddPhoto)
+        courtPhotoImageView = view.findViewById(R.id.imageViewCourtPhoto)
 
         // Set up spinner adapter explicitly (even with entries) to ensure control over items
         ArrayAdapter.createFromResource(
@@ -103,6 +209,10 @@ class AddCourtFragment : Fragment() {
             }
         }
 
+        addPhotoButton.setOnClickListener {
+            showPhotoSourceChooser()
+        }
+
         // Existing layout click listeners now only for text inputs
         view.findViewById<View>(R.id.layoutCourtName).setOnClickListener {
             showKeyboard(courtNameEditText)
@@ -117,7 +227,7 @@ class AddCourtFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        initActivityResultLaunchers()
     }
 
     override fun onCreateView(
@@ -224,6 +334,12 @@ class AddCourtFragment : Fragment() {
         checkboxNets.isChecked = false
         layoutTennisAmenities.visibility = View.VISIBLE
         layoutBasketballAmenities.visibility = View.GONE
+
+        // Image state
+        selectedImageUri = null
+        currentPhotoUri = null
+        courtPhotoImageView.setImageDrawable(null)
+        courtPhotoImageView.visibility = View.GONE
     }
 
 
