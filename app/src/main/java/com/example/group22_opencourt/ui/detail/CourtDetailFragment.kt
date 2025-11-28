@@ -35,6 +35,14 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import java.util.Locale
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+
+
 class CourtDetailFragment : Fragment() {
     private lateinit var viewModel: CourtDetailViewModel
     private lateinit var courtsRecyclerView : RecyclerView
@@ -45,7 +53,13 @@ class CourtDetailFragment : Fragment() {
 
     private var lastWeatherAddress: String? = null
 
+    private var pendingStart: (() -> Unit)? = null
 
+    private val requestNotifPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) pendingStart?.invoke()
+            pendingStart = null
+        }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -109,7 +123,7 @@ class CourtDetailFragment : Fragment() {
                     val activity = requireActivity()
                     if (activity is MainActivity) {
                         activity.showToolBarButton("Notify When\navailable") {
-                            startNotificationService()
+                            startNotificationService(court)
                         }
                     }
                 } else {
@@ -224,8 +238,26 @@ class CourtDetailFragment : Fragment() {
         else -> "🌡️"
     }
 
-    private fun startNotificationService() {
-        //stuff
+    private fun startNotificationService(court: Court) {
+        val start = {
+            val i = Intent(requireContext(), com.example.group22_opencourt.model.CourtAvailabilityService::class.java).apply {
+                putExtra("extra_document_id", documentId)
+                putExtra("extra_court_name", court.base.name)
+            }
+            ContextCompat.startForegroundService(requireContext(), i)
+            Toast.makeText(requireContext(), "Monitoring Availability…", Toast.LENGTH_SHORT).show()
+        }
+
+        if (Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            pendingStart = start
+            requestNotifPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+
+        } else {
+            start()
+        }
     }
 
     companion object {
