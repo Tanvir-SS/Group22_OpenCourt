@@ -10,16 +10,24 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.example.group22_opencourt.R
-import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.FirebaseFirestore
+
 
 import android.app.PendingIntent
-
+import androidx.lifecycle.Observer
 
 
 class CourtAvailabilityService : Service() {
 
-    private var registration: ListenerRegistration? = null
+
+    private var courtLiveData : FirestoreDocumentLiveData<Court?>? = null
+    private val observer = Observer<Court?> { court ->
+        if (court != null) {
+            if (court.base.courtsAvailable > 0) {
+                sendAvailableNotification(court.base.name)
+                cleanupAndStop()
+            }
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -41,30 +49,14 @@ class CourtAvailabilityService : Service() {
 
         startListening(collection, docId, courtName)
         return START_STICKY
-
-        if (intent?.action == ACTION_STOP) {
-            cleanupAndStop()
-            return START_NOT_STICKY
-        }
     }
 
     private fun startListening(collection: String, docId: String, courtName: String) {
-        registration?.remove()
+        courtLiveData?.removeObserver(observer)
 
-        val docRef = FirebaseFirestore.getInstance().collection(collection).document(docId)
+        courtLiveData = CourtRepository.instance.getCourtLiveData(docId)
+        courtLiveData?.observeForever(observer)
 
-        registration = docRef.addSnapshotListener { snap, err ->
-            if (err != null || snap == null || !snap.exists()) return@addSnapshotListener
-
-            // Adjust this field name to match your Firestore schema:
-            // in your detail UI you used court.base.courtsAvailable == 0 / > 0
-            val courtsAvailable = snap.getLong("courtsAvailable")?.toInt() ?: 0
-
-            if (courtsAvailable > 0) {
-                sendAvailableNotification(courtName)
-                cleanupAndStop()
-            }
-        }
     }
 
     private fun sendAvailableNotification(courtName: String) {
@@ -75,7 +67,7 @@ class CourtAvailabilityService : Service() {
             .setContentTitle("Court available 🎉")
             .setContentText("$courtName has availability now.")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
+            .setAutoCancel(false)
             .build()
 
         nm.notify(ALERT_ID, notif)
@@ -129,15 +121,15 @@ class CourtAvailabilityService : Service() {
     }
 
     private fun cleanupAndStop() {
-        registration?.remove()
-        registration = null
+        courtLiveData?.removeObserver(observer)
+        courtLiveData = null
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
 
     override fun onDestroy() {
-        registration?.remove()
-        registration = null
+        courtLiveData?.removeObserver(observer)
+        courtLiveData = null
         super.onDestroy()
     }
 
