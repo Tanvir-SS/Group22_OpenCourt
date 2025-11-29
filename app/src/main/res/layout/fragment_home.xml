@@ -21,13 +21,15 @@
         android:paddingTop="8dp"
         android:paddingBottom="8dp">
 
-        <TextView
-            android:id="@+id/textView2"
+        <!-- Spinner for switching between Nearby Courts and Favourites -->
+        <Spinner
+            android:id="@+id/home_mode_spinner"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Nearby Courts"
-            android:textSize="24sp" />
+            android:spinnerMode="dropdown"
+            android:entries="@array/home_modes"
+            tools:entries="@array/home_modes_preview" />
 
         <Button
             android:id="@+id/filter_button"

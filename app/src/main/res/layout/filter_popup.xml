@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -28,7 +29,7 @@
         android:textColor="@color/white"
         app:buttonTint="@color/white" />
 
-    <!-- Thin white bar before slider -->
+    <!-- Thin white bar before sort / slider area -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
@@ -36,40 +37,74 @@
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp" />
 
-    <!-- Distance slider label -->
-    <TextView
-        android:id="@+id/distance_label"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Distance within"
-        android:textColor="@color/white"
-        android:layout_marginTop="4dp" />
-
-    <!-- Distance slider -->
-    <com.google.android.material.slider.Slider
-        android:id="@+id/distance_slider"
+    <!-- Sort section: initially hidden 'Recently added' option -->
+    <LinearLayout
+        android:id="@+id/sort_recent_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:valueFrom="0"
-        android:valueTo="4"
-        android:stepSize="1"
-        app:trackColor="@color/white"
-        app:thumbColor="@color/white"
-        app:haloColor="@color/white"
-        app:tickColor="@color/white"
-        app:labelBehavior="gone" />
+        android:orientation="vertical"
+        android:visibility="gone"
+        tools:visibility="visible">
 
-    <!-- Selected distance display -->
-    <TextView
-        android:id="@+id/distance_value"
-        android:layout_width="wrap_content"
+        <TextView
+            android:id="@+id/sort_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Sort by"
+            android:textColor="@color/white" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/checkbox_recent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Recently added"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textColor="@color/white"
+            app:buttonTint="@color/white" />
+    </LinearLayout>
+
+    <!-- Distance slider section (current 'Distance within') -->
+    <LinearLayout
+        android:id="@+id/distance_container"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="1 km"
-        android:textColor="@color/white"
-        android:textSize="14sp"
-        android:layout_gravity="center_horizontal" />
+        android:orientation="vertical"
+        android:visibility="visible">
 
-    <!-- Thin white bar after slider -->
+        <TextView
+            android:id="@+id/distance_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Distance within"
+            android:textColor="@color/white" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/distance_slider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stepSize="1"
+            android:valueFrom="0"
+            android:valueTo="4"
+            app:haloColor="@color/white"
+            app:labelBehavior="gone"
+            app:thumbColor="@color/white"
+            app:tickColor="@color/white"
+            app:trackColor="@color/white" />
+
+        <TextView
+            android:id="@+id/distance_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="1 km"
+            android:textColor="@color/white"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- Thin white bar after sort / slider area -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"

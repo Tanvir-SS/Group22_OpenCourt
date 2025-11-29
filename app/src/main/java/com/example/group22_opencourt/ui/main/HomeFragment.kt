@@ -6,6 +6,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.AdapterView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
@@ -44,7 +46,8 @@ class HomeFragment : Fragment() {
     // New filter state variable
     private var filterAvailableOnly = false // Track available courts only filter
 
-
+    private enum class Mode { NEARBY, FAVOURITES }
+    private var currentMode: Mode = Mode.NEARBY
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -144,6 +147,49 @@ class HomeFragment : Fragment() {
             val xOffset = binding.filterButton.width - popupWidth
             popupWindow.showAsDropDown(binding.filterButton, xOffset, 0)
         }
+
+        setupModeSpinner()
+    }
+
+    private fun setupModeSpinner() {
+        val spinner = binding.homeModeSpinner
+        val adapter = ArrayAdapter.createFromResource(
+            requireContext(),
+            R.array.home_modes,
+            R.layout.item_home_mode_spinner
+        ).also { arrAdapter ->
+            arrAdapter.setDropDownViewResource(R.layout.item_home_mode_spinner_dropdown)
+        }
+        spinner.adapter = adapter
+
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                when (position) {
+                    0 -> {
+                        currentMode = Mode.NEARBY
+                        applyAllFilters()
+                    }
+                    1 -> {
+                        currentMode = Mode.FAVOURITES
+                        showFavourites()
+                    }
+                }
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>) {
+                // no-op
+            }
+        }
+    }
+
+    private fun showFavourites() {
+        // Placeholder: currently just reuses nearby list; replace with real favourites logic.
+        adapter.setItems(courts) { }
     }
 
     private fun applyAllFilters(onSuccess: ((List<Court>) -> Unit)? = null) {
