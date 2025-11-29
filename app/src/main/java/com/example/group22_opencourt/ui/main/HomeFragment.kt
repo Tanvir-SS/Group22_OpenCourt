@@ -13,9 +13,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.example.group22_opencourt.BuildConfig
-import com.example.group22_opencourt.MainActivity
 import com.example.group22_opencourt.R
 import com.example.group22_opencourt.databinding.FragmentHomeBinding
 import com.example.group22_opencourt.model.BasketballCourt
@@ -23,10 +20,6 @@ import com.example.group22_opencourt.model.Court
 import com.example.group22_opencourt.model.ImagesRepository
 import com.example.group22_opencourt.model.TennisCourt
 import com.example.group22_opencourt.ui.main.HomeRecyclerViewAdapter.ViewHolder
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.libraries.places.api.Places
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -35,9 +28,7 @@ import java.util.Locale
 class HomeFragment : Fragment() {
 
     private lateinit var binding: FragmentHomeBinding
-    private var adapter: HomeRecyclerViewAdapter = HomeRecyclerViewAdapter(emptyList()) {
-        onCourtSelected(it.base.id)
-    }
+    private lateinit var adapter: HomeRecyclerViewAdapter
     private val viewModel: HomeViewModel by activityViewModels()
 
     // Filter state
@@ -65,7 +56,6 @@ class HomeFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
         val dividerItemDecoration = DividerItemDecoration(
             binding.recyclerView.context,
             DividerItemDecoration.VERTICAL
@@ -79,7 +69,11 @@ class HomeFragment : Fragment() {
                 longitude = longitude1
             }
         }
+        adapter = HomeRecyclerViewAdapter(emptyList()) {
+            onCourtSelected(it.base.id)
+        }
         binding.recyclerView.adapter = adapter
+        binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
         // Observe courts from ViewModel and update adapter
         viewModel.courts.observe(viewLifecycleOwner) { courts ->
@@ -202,7 +196,7 @@ class HomeFragment : Fragment() {
             }
         }
 
-        adapter.setItems(sorted, lifecycleScope) {
+        adapter.setItems(sorted) {
             onSuccess?.invoke(sorted)
         }
     }
@@ -219,6 +213,7 @@ class HomeFragment : Fragment() {
             applyAllFilters() { sorted ->
                 //the apply filters only updates position and reuses viewHolders if on screen
                 //apply this to update the any detail on the texts in the viewholders
+//                Log.d("court", "happens cause of child loop")
                 for (i in 0 until minOf(binding.recyclerView.childCount, sorted.size)) {
                     val court = sorted[i]
                     val child = binding.recyclerView.getChildAt(i)

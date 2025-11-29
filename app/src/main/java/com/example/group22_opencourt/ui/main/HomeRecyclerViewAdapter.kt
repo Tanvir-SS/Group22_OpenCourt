@@ -118,30 +118,29 @@ class HomeRecyclerViewAdapter(
         return courtList.size
     }
 
-    fun setItems(newList: List<Court>, lifecycleScope: CoroutineScope, onSuccess: (() -> Unit)? = null) {
-        val oldList = courtList // Make a copy for thread safety
-        lifecycleScope.launch(Dispatchers.Default) {
-            val diffCallback = object : DiffUtil.Callback() {
-                override fun getOldListSize() = oldList.size
-                override fun getNewListSize() = newList.size
-                override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-                    return oldList[oldItemPosition].base.name == newList[newItemPosition].base.name
-                }
+    fun setItems(newList: List<Court>, onSuccess: (() -> Unit)? = null) {
+        val oldList = courtList.toList() // Make a copy for thread safety
 
-                override fun areContentsTheSame(
-                    oldItemPosition: Int,
-                    newItemPosition: Int
-                ): Boolean {
-                    return oldList[oldItemPosition] == newList[newItemPosition]
-                }
+        val diffCallback = object : DiffUtil.Callback() {
+            override fun getOldListSize() = oldList.size
+            override fun getNewListSize() = newList.size
+            override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return oldList[oldItemPosition].base.id == newList[newItemPosition].base.id
             }
-            val diffResult = DiffUtil.calculateDiff(diffCallback)
-            withContext(Dispatchers.Main) {
-                courtList = newList
-                diffResult.dispatchUpdatesTo(this@HomeRecyclerViewAdapter)
-                onSuccess?.invoke()
+
+            override fun areContentsTheSame(
+                oldItemPosition: Int,
+                newItemPosition: Int
+            ): Boolean {
+                return oldList[oldItemPosition] == newList[newItemPosition]
             }
         }
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+
+        courtList = newList
+        Log.d("court", "happen here")
+        diffResult.dispatchUpdatesTo(this@HomeRecyclerViewAdapter)
+        onSuccess?.invoke()
     }
 
     fun getFullList(): List<Court> {

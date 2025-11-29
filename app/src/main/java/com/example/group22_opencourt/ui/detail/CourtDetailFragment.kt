@@ -276,17 +276,6 @@ class CourtDetailFragment : Fragment(), OnMapReadyCallback {
         Log.d("debug", parts.joinToString(" "))
         lastVerifiedTextView.text = parts.joinToString(" ")
     }
-
-    private fun geocodeAddress(address: String): Pair<Double, Double>? {
-        return try {
-            val geocoder = android.location.Geocoder(requireContext(), java.util.Locale.getDefault())
-            val results = geocoder.getFromLocationName(address, 1)
-            val loc = results?.firstOrNull() ?: return null
-            loc.latitude to loc.longitude
-        } catch (_: Exception) {
-            null
-        }
-    }
     private fun weatherCodeToEmoji(code: Int): String = when (code) {
         0 -> "☀️"
         1, 2, 3 -> "⛅"
@@ -371,28 +360,28 @@ class CourtStatusAdapter(private var items: List<CourtStatus>, private val lifec
     override fun getItemCount(): Int = items.size
 
     fun setItems(newList: List<CourtStatus>, onSuccess: (() -> Unit)? = null) {
-        val oldList = items // Make a copy for thread safety
-        lifecycleScope.launch(Dispatchers.Default) {
-            val diffCallback = object : DiffUtil.Callback() {
-                override fun getOldListSize() = oldList.size
-                override fun getNewListSize() = newList.size
-                override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-                    return oldList[oldItemPosition] == newList[newItemPosition]
-                }
+        val oldList = items.toList() // Make a copy for thread safety
 
-                override fun areContentsTheSame(
-                    oldItemPosition: Int,
-                    newItemPosition: Int
-                ): Boolean {
-                    return oldList[oldItemPosition] == newList[newItemPosition]
-                }
+        val diffCallback = object : DiffUtil.Callback() {
+            override fun getOldListSize() = oldList.size
+            override fun getNewListSize() = newList.size
+            override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return oldList[oldItemPosition] == newList[newItemPosition]
             }
-            val diffResult = DiffUtil.calculateDiff(diffCallback)
-            withContext(Dispatchers.Main) {
-                items = newList
-                diffResult.dispatchUpdatesTo(this@CourtStatusAdapter)
-                onSuccess?.invoke()
+
+            override fun areContentsTheSame(
+                oldItemPosition: Int,
+                newItemPosition: Int
+            ): Boolean {
+                return oldList[oldItemPosition] == newList[newItemPosition]
             }
         }
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+
+        items = newList
+        diffResult.dispatchUpdatesTo(this@CourtStatusAdapter)
+        onSuccess?.invoke()
+
+
     }
 }
