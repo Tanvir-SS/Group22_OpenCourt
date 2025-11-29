@@ -35,6 +35,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+//for weather
+
+import android.location.Geocoder
+import android.widget.ProgressBar
+import java.util.Locale
+
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+
 
 class CourtDetailFragment : Fragment(), OnMapReadyCallback {
     private lateinit var viewModel: CourtDetailViewModel
@@ -48,6 +61,16 @@ class CourtDetailFragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var lastVerifiedTextView : TextView
     private var documentId = ""
+
+    private var lastWeatherAddress: String? = null
+
+    private var pendingStart: (() -> Unit)? = null
+
+    private val requestNotifPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) pendingStart?.invoke()
+            pendingStart = null
+        }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -71,6 +94,41 @@ class CourtDetailFragment : Fragment(), OnMapReadyCallback {
         lastVerifiedTextView = view.findViewById(R.id.last_verified)
         adapter = CourtStatusAdapter(emptyList(), lifecycleScope)
         courtsRecyclerView.adapter = adapter
+
+        //Weather UI (NEW)
+        val weatherValue = view.findViewById<android.widget.TextView>(R.id.weather_value)
+        val weatherProgress = view.findViewById<android.widget.ProgressBar>(R.id.weather_progress)
+
+        // Used to avoid geocoding + refetching repeatedly for the same court/address
+
+        viewModel.weather.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is WeatherUiState.Idle -> {
+                    weatherProgress.visibility = View.GONE
+                    weatherValue.text = "—"
+                }
+                is WeatherUiState.Loading -> {
+                    weatherProgress.visibility = View.VISIBLE
+                    weatherValue.text = "Loading…"
+                }
+                is WeatherUiState.Ready -> {
+                    weatherProgress.visibility = View.GONE
+                    val w = state.weather
+                    val emoji = weatherCodeToEmoji(w.weatherCode)
+                    val temp = String.format(Locale.getDefault(), "%.0f", w.tempC)
+                    val wind = String.format(Locale.getDefault(), "%.0f", w.windKmh)
+
+                    weatherValue.text = "$emoji $temp°C · ${w.description} · Wind $wind km/h"
+
+                }
+                is WeatherUiState.Error -> {
+                    weatherProgress.visibility = View.GONE
+                    weatherValue.text = state.message
+                }
+            }
+        }
+
+
         viewModel.courtLiveData.observe(viewLifecycleOwner) { court ->
             Log.d("map", "court loaded")
             if (court != null) {
@@ -95,7 +153,7 @@ class CourtDetailFragment : Fragment(), OnMapReadyCallback {
                     val activity = requireActivity()
                     if (activity is MainActivity) {
                         activity.showToolBarButton("Notify When\navailable") {
-                            startNotificationService()
+                            startNotificationService(court)
                         }
                     }
                 } else {
@@ -107,18 +165,11 @@ class CourtDetailFragment : Fragment(), OnMapReadyCallback {
                 // Title: "{name} ({number of courts})"
                 val titleView = view.findViewById<android.widget.TextView>(R.id.court_title)
                 var titleString = ""
-//                when (court) {
-//                    is TennisCourt -> titleString = "Tennis - "
-//                    is BasketballCourt -> titleString = "Basketball - "
-//                }
                 titleString += "${court.base.name} (${court.base.totalCourts})"
                 titleView.text = titleString
                 // Address
                 val addressView = view.findViewById<android.widget.TextView>(R.id.court_address)
                 addressView.text = court.base.address
-                // Last Verified (if you want to show it)
-                val lastVerifiedView = view.findViewById<android.widget.TextView>(R.id.last_verified)
-                // lastVerifiedView.text = "Last Verified: ${court.base.lastVerified}" // Uncomment if available
 
                 // Build amenities string
                 val amenitiesList = mutableListOf<String>()
@@ -135,6 +186,32 @@ class CourtDetailFragment : Fragment(), OnMapReadyCallback {
 
                 // Update courts list RecyclerView (uncomment and implement CourtStatusAdapter)
                 adapter.setItems(court.base.courtStatus)
+
+                // Weather fetch trigger
+                val addr = court.base.address
+                if (addr.isNotBlank() && addr != lastWeatherAddress) {
+                    lastWeatherAddress = addr
+                    viewModel.setWeatherLoading()
+
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        val latLon: Pair<Double, Double>? = try {
+                            val geocoder = android.location.Geocoder(requireContext(), java.util.Locale.getDefault())
+                            val results = geocoder.getFromLocationName(addr, 1)
+                            val loc = results?.firstOrNull()
+                            if (loc != null) Pair(loc.latitude, loc.longitude) else null
+                        } catch (_: Exception) {
+                            null
+                        }
+
+                        withContext(Dispatchers.Main) {
+                            if (latLon == null) {
+                                viewModel.setWeatherError("Weather unavailable")
+                            } else {
+                                viewModel.loadWeather(latLon.first, latLon.second)
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -200,9 +277,48 @@ class CourtDetailFragment : Fragment(), OnMapReadyCallback {
         lastVerifiedTextView.text = parts.joinToString(" ")
     }
 
+    private fun geocodeAddress(address: String): Pair<Double, Double>? {
+        return try {
+            val geocoder = android.location.Geocoder(requireContext(), java.util.Locale.getDefault())
+            val results = geocoder.getFromLocationName(address, 1)
+            val loc = results?.firstOrNull() ?: return null
+            loc.latitude to loc.longitude
+        } catch (_: Exception) {
+            null
+        }
+    }
+    private fun weatherCodeToEmoji(code: Int): String = when (code) {
+        0 -> "☀️"
+        1, 2, 3 -> "⛅"
+        45, 48 -> "🌫️"
+        51, 53, 55 -> "🌦️"
+        61, 63, 65 -> "🌧️"
+        71, 73, 75 -> "🌨️"
+        80, 81, 82 -> "🌦️"
+        95, 96, 99 -> "⛈️"
+        else -> "🌡️"
+    }
 
-    private fun startNotificationService() {
-        //stuff
+    private fun startNotificationService(court: Court) {
+        val start = {
+            val i = Intent(requireContext(), com.example.group22_opencourt.model.CourtAvailabilityService::class.java).apply {
+                putExtra("extra_document_id", documentId)
+                putExtra("extra_court_name", court.base.name)
+            }
+            ContextCompat.startForegroundService(requireContext(), i)
+            Toast.makeText(requireContext(), "Monitoring Availability…", Toast.LENGTH_SHORT).show()
+        }
+
+        if (Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            pendingStart = start
+            requestNotifPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+
+        } else {
+            start()
+        }
     }
 
     override fun onMapReady(map: GoogleMap) {
