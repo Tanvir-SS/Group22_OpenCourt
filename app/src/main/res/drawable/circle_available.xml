@@ -1,0 +1,16 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+
+    <size
+        android:width="32dp"
+        android:height="32dp" />
+
+    <!-- No solid fill = empty center -->
+    <solid android:color="@android:color/transparent" />
+
+    <!-- Border -->
+    <stroke
+        android:width="5dp"
+        android:color="@color/oc_available" />
+
+</shape>

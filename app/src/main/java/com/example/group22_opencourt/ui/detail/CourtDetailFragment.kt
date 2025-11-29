@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.CheckBox
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -54,7 +55,7 @@ class CourtDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         courtsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-        adapter = CourtStatusAdapter(emptyList(), lifecycleScope)
+        adapter = CourtStatusAdapter(emptyList(), lifecycleScope, false)
         courtsRecyclerView.adapter = adapter
         viewModel.courtLiveData.observe(viewLifecycleOwner) { court ->
             Log.d("debug", "message")
@@ -78,16 +79,17 @@ class CourtDetailFragment : Fragment() {
 
                 // Build amenities string
                 val amenitiesList = mutableListOf<String>()
-                court.base.lights?.let { amenitiesList.add("Lights: ${if (it) "✓" else "✗"}") }
-                court.base.indoor?.let { amenitiesList.add("Indoor: ${if (it) "✓" else "✗"}") }
-                court.base.washroom?.let { amenitiesList.add("Washroom: ${if (it) "✓" else "✗"}") }
-                court.base.accessibility?.let { amenitiesList.add("Accessibility: ${if (it) "✓" else "✗"}") }
+                amenitiesList.add(formatAmenity("Accessibility", court.base.accessibility))
+                amenitiesList.add(formatAmenity("Washroom", court.base.washroom))
+                amenitiesList.add(formatAmenity("Indoor", court.base.indoor))
+                amenitiesList.add(formatAmenity("Lights", court.base.lights))
+
                 when (court) {
-                    is TennisCourt -> court.practiceWall?.let { amenitiesList.add("Practice Wall: ${if (it) "✓" else "✗"}") }
-                    is BasketballCourt -> court.nets?.let { amenitiesList.add("Nets: ${if (it) "✓" else "✗"}") }
+                    is TennisCourt -> amenitiesList.add(formatAmenity("Practice Wall", court.practiceWall))
+                    is BasketballCourt -> amenitiesList.add(formatAmenity("Nets", court.nets))
                 }
                 val amenitiesView = view.findViewById<android.widget.TextView>(R.id.amenities_list)
-                amenitiesView.text = if (amenitiesList.isNotEmpty()) amenitiesList.joinToString(" · ") else "None"
+                amenitiesView.text = if (amenitiesList.isNotEmpty()) amenitiesList.joinToString("• ") else "None"
 
                 // Update courts list RecyclerView (uncomment and implement CourtStatusAdapter)
                 adapter.setItems(court.base.courtStatus)
@@ -125,14 +127,23 @@ class CourtDetailFragment : Fragment() {
             return fragment
         }
     }
+
+    fun formatAmenity(label: String, value: Boolean?): String {
+        return when (value) {
+            true -> "$label: ✓ "
+            false -> "$label: ✗ "
+            null -> "$label: ？"
+        }
+    }
 }
 
 
-class CourtStatusAdapter(private var items: List<CourtStatus>, private val lifecycleScope: CoroutineScope) : RecyclerView.Adapter<CourtStatusAdapter.ViewHolder>() {
+class CourtStatusAdapter(private var items: List<CourtStatus>, private val lifecycleScope: CoroutineScope, private val showCheckbox: Boolean) : RecyclerView.Adapter<CourtStatusAdapter.ViewHolder>() {
     class ViewHolder(val view: android.view.View) : RecyclerView.ViewHolder(view) {
         val colorSquare = view.findViewById<View>(R.id.status_color_square)
         val nameView = view.findViewById<android.widget.TextView>(R.id.court_name)
         val statusView = view.findViewById<android.widget.TextView>(R.id.court_status)
+        val checkbox = view.findViewById<CheckBox>(R.id.court_checkbox)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -147,10 +158,11 @@ class CourtStatusAdapter(private var items: List<CourtStatus>, private val lifec
         holder.statusView.text = if (courtStatus.courtAvailable) "Available" else "In Play"
         // Set color bar based on status
         if (courtStatus.courtAvailable)  {
-            holder.colorSquare.setBackgroundColor(ContextCompat.getColor(holder.itemView.context, R.color.oc_available))
+            holder.colorSquare.background = ContextCompat.getDrawable(holder.itemView.context, R.drawable.circle_available)
         } else {
-            holder.colorSquare.setBackgroundColor(ContextCompat.getColor(holder.itemView.context, R.color.oc_unavailable))
+            holder.colorSquare.background = ContextCompat.getDrawable(holder.itemView.context, R.drawable.x_unavailable)
         }
+        holder.checkbox.visibility = if (showCheckbox) View.VISIBLE else View.GONE
 
     }
 
