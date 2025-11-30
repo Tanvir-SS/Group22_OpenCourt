@@ -265,14 +265,14 @@ class CourtDetailFragment : Fragment(), OnMapReadyCallback {
                 userInstance.favourites.remove(currCourt.base.id)
                 UserRepository.instance.createOrUpdateUser(userInstance) {
                     if (it) {
-                        Toast.makeText(requireContext(), "unfavorited court", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), "Unfavourited Court", Toast.LENGTH_SHORT).show()
                     }
                 }
             } else {
                 userInstance.favourites.add(0, currCourt.base.id)
                 UserRepository.instance.createOrUpdateUser(userInstance) {
                     if (it) {
-                        Toast.makeText(requireContext(), "court added to favourites", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), "Court Favourited", Toast.LENGTH_SHORT).show()
                     }
                 }
             }

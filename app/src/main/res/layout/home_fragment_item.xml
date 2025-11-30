@@ -7,7 +7,7 @@
 
     <!-- Thin vertical bar at the very left edge, height matches parent, not affected by padding -->
     <androidx.cardview.widget.CardView
-        android:layout_width="8dp"
+        android:layout_width="4dp"
         android:layout_height="match_parent"
         android:layout_gravity="start|top"
         android:layout_marginTop="15dp"
@@ -95,7 +95,6 @@
                 android:text="Vancouver BC" />
 
         </LinearLayout>
-
 
         <TextView
             android:id="@+id/court_distance_text"

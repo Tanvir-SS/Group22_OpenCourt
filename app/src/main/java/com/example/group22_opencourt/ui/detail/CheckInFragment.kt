@@ -49,10 +49,15 @@ class CheckInFragment : Fragment() {
                 court?.let {
                     // Iterate over courtStatus and toggle availability for all courts based on adapter state
                     CoroutineScope(Dispatchers.IO).launch {
-                        CourtRepository.instance.updateCourt(it) { success ->
+                        // Update the courtsAvailable field based on the courtStatus list
+                        val availableCount = court.base.courtStatus.count { it.courtAvailable }
+                        court.base.courtsAvailable = availableCount
+
+                        // Save the updated court to the database
+                        CourtRepository.instance.updateCourt(court) { success ->
                             if (success) {
                                 // Update the LiveData to reflect the change in availability
-                                CourtRepository.instance.updateCourtInLiveData(it)
+                                CourtRepository.instance.updateCourtInLiveData(court)
                                 CoroutineScope(Dispatchers.Main).launch {
                                     Toast.makeText(requireContext(), "Courts Updated.", Toast.LENGTH_SHORT).show()
                                     requireActivity().onBackPressed()

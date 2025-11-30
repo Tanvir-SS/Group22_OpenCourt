@@ -95,24 +95,24 @@ class LoginActivity : AppCompatActivity() {
 
     private fun loginWithEmail(email: String, password: String) {
         if (email.isEmpty() || password.isEmpty()) {
-            Toast.makeText(this, "Enter email and password", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Enter Email and Password", Toast.LENGTH_SHORT).show()
             return
         }
 
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show()
                     navigateToMain()
                 } else {
-                    Toast.makeText(this, "Login failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "Login Failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                 }
             }
     }
 
     private fun signupWithEmail(email: String, password: String, confirmPassword: String) {
         if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
-            Toast.makeText(this, "Fill in all fields", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Fill in All Fields", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -131,7 +131,7 @@ class LoginActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     navigateToMain()
                 } else {
-                    Toast.makeText(this, "Sign up failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "Sign up Failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                 }
             }
     }
@@ -193,7 +193,7 @@ class LoginActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     // Sign in success, update UI with the signed-in user's information
                     Log.d("debug", "signInWithCredential:success")
-                    Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show()
                     navigateToMain()
                 } else {
                     // If sign in fails, display a message to the user

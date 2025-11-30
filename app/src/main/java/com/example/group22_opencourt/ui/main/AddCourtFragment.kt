@@ -95,7 +95,7 @@ class AddCourtFragment : Fragment() {
                 // Notify ViewModel that camera photo was captured
                 viewModel.onCameraPhotoCaptured()
             } else {
-                Toast.makeText(requireContext(), "Failed to take photo", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Failed to Take Photo", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -307,7 +307,7 @@ class AddCourtFragment : Fragment() {
                     if (uri != null) {
                         base.photoUri = ImagesRepository.instance.uploadPhotoToFirebase(base.name, uri)
                         if (base.photoUri == ImagesRepository.FAIl) {
-                            Toast.makeText(requireContext(), "Court failed to uploaded", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(requireContext(), "Court Failed to Upload", Toast.LENGTH_SHORT).show()
                             return@launch
                         }
                     }
@@ -320,11 +320,11 @@ class AddCourtFragment : Fragment() {
                             val court = TennisCourt(base = base, practiceWall = checkboxPracticeWall.isChecked)
                             repository.addCourt(court) {
                                 if (it) {
-                                    Toast.makeText(requireContext(), "Court uploaded", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(requireContext(), "Court Uploaded", Toast.LENGTH_SHORT).show()
                                     resetForm()
 
                                 } else {
-                                    Toast.makeText(requireContext(), "Court failed to uploaded", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(requireContext(), "Court Failed to Upload", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
@@ -332,16 +332,16 @@ class AddCourtFragment : Fragment() {
                             val court = BasketballCourt(base = base, nets = checkboxNets.isChecked)
                             repository.addCourt(court) {
                                 if (it) {
-                                    Toast.makeText(requireContext(), "Court uploaded", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(requireContext(), "Court Uploaded", Toast.LENGTH_SHORT).show()
                                     resetForm()
                                 } else {
-                                    Toast.makeText(requireContext(), "Court failed to uploaded", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(requireContext(), "Court Failed to Upload", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
                     }
                 } else {
-                    Toast.makeText(requireContext(), "Failed to get location", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Failed to get Location", Toast.LENGTH_SHORT).show()
                 }
                 allowAdd = true
             }
