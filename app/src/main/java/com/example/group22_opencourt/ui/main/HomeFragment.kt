@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AdapterView
+import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
@@ -21,7 +22,10 @@ import com.example.group22_opencourt.model.BasketballCourt
 import com.example.group22_opencourt.model.Court
 import com.example.group22_opencourt.model.ImagesRepository
 import com.example.group22_opencourt.model.TennisCourt
+import com.example.group22_opencourt.model.User
+import com.example.group22_opencourt.model.UserRepository
 import com.example.group22_opencourt.ui.main.HomeRecyclerViewAdapter.ViewHolder
+import com.google.android.material.checkbox.MaterialCheckBox
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -36,6 +40,8 @@ class HomeFragment : Fragment() {
     // Filter state
     private var showTennis = true
     private var showBasketball = true
+
+    private var showRecent = false
     private var lastUserLocation: Location? = null
     private val locationUpdateThresholdMeters = 50f
     private var selectedDistanceKm = 5 // Default distance
@@ -48,6 +54,9 @@ class HomeFragment : Fragment() {
 
     private enum class Mode { NEARBY, FAVOURITES }
     private var currentMode: Mode = Mode.NEARBY
+
+    private var currentUser : User? = null
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -77,6 +86,11 @@ class HomeFragment : Fragment() {
         }
         binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
+
+        UserRepository.instance.currentUser.observe(viewLifecycleOwner) {
+            currentUser = it
+        }
+
 
         // Observe courts from ViewModel and update adapter
         viewModel.courts.observe(viewLifecycleOwner) { courts ->
@@ -116,6 +130,15 @@ class HomeFragment : Fragment() {
                 R.id.checkbox_tennis)
             val basketballCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.checkbox_basketball)
             val availableCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.checkbox_available)
+            val recentContainer : LinearLayout = popupView.findViewById(R.id.sort_recent_container)
+            val nearbyContainer : LinearLayout = popupView.findViewById(R.id.distance_container)
+            if (currentMode == Mode.NEARBY) {
+                recentContainer.visibility = View.GONE
+                nearbyContainer.visibility = View.VISIBLE
+            } else if (currentMode == Mode.FAVOURITES) {
+                recentContainer.visibility = View.VISIBLE
+                nearbyContainer.visibility = View.GONE
+            }
             tennisCheck.isChecked = showTennis
             basketballCheck.isChecked = showBasketball
             availableCheck.isChecked = filterAvailableOnly
@@ -132,6 +155,14 @@ class HomeFragment : Fragment() {
                 filterAvailableOnly = isChecked
                 applyAllFilters()
             }
+
+            val recentCheck = popupView.findViewById<MaterialCheckBox>(R.id.checkbox_recent)
+            recentCheck.isChecked = showRecent
+            recentCheck.setOnCheckedChangeListener { _, isChecked ->
+                showRecent = isChecked
+                applyAllFilters()
+            }
+
             //  Distance slider logic
             val distanceSlider = popupView.findViewById<com.google.android.material.slider.Slider>(R.id.distance_slider)
             val distanceValue = popupView.findViewById<android.widget.TextView>(R.id.distance_value)
@@ -176,7 +207,7 @@ class HomeFragment : Fragment() {
                     }
                     1 -> {
                         currentMode = Mode.FAVOURITES
-                        showFavourites()
+                        applyAllFilters()
                     }
                 }
             }
@@ -187,60 +218,29 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun showFavourites() {
-        // Placeholder: currently just reuses nearby list; replace with real favourites logic.
-        adapter.setItems(courts) { }
-    }
-
     private fun applyAllFilters(onSuccess: ((List<Court>) -> Unit)? = null) {
         val location = lastUserLocation
         if (location == null) {
+            val user = currentUser
+            if (currentMode == Mode.FAVOURITES && user != null) {
+                val filter = courts.filter { court ->
+                    user.favourites.contains(court.base.id)
+                }
+                val sorted = filter.sortedBy { court ->
+                    user.favourites.indexOf(court.base.id)
+                }
+                adapter.setItems(sorted)
+            } else if (currentMode ==  Mode.NEARBY) {
+                adapter.setItems(emptyList())
+            }
             return
         }
-        adapter.location = lastUserLocation
-        val filtered = courts.filter { court ->
-            var typeMatch = false
-            when (court) {
-                is BasketballCourt -> typeMatch = showBasketball
-                is TennisCourt -> typeMatch = showTennis
-            }
-            val geoPoint = court.base.geoPoint
-            val distanceMatch = if (location != null && geoPoint != null) {
-                val results = FloatArray(1)
-                Location.distanceBetween(
-                    location.latitude, location.longitude,
-                    geoPoint.latitude, geoPoint.longitude,
-                    results
-                )
-                results[0] <= selectedDistanceKm * 1000
-            } else {
-                true // If no location, show all
-            }
-            var availableMatch = true
-            if (filterAvailableOnly && court.base.courtsAvailable == 0) {
-                availableMatch = false
-            }
-            typeMatch && distanceMatch && availableMatch
-        }
+        adapter.location = location
+        val filtered = filterCourts(location)
         var sorted = filtered
 
         //sort by shortest distance
-        sorted = filtered.sortedBy { court ->
-            val geoPoint = court.base.geoPoint
-            if (geoPoint != null) {
-                val results = FloatArray(1)
-                Location.distanceBetween(
-                    location.latitude, location.longitude,
-                    geoPoint.latitude, geoPoint.longitude,
-                    results
-                )
-                //return distance
-                results[0]
-            } else {
-                //return max distance because no location data
-                Float.MAX_VALUE
-            }
-        }
+        sorted = sortList(filtered, location)
 
         adapter.setItems(sorted) {
             onSuccess?.invoke(sorted)
@@ -284,6 +284,77 @@ class HomeFragment : Fragment() {
         }
     }
 
+    private fun filterCourts(location : Location) : List<Court> {
+        return courts.filter { court ->
+            var typeMatch = false
+            when (court) {
+                is BasketballCourt -> typeMatch = showBasketball
+                is TennisCourt -> typeMatch = showTennis
+            }
+            var distanceMatch = false
+            if (currentMode == Mode.NEARBY) {
+                val geoPoint = court.base.geoPoint
+                distanceMatch = if (geoPoint != null) {
+                    val results = FloatArray(1)
+                    Location.distanceBetween(
+                        location.latitude, location.longitude,
+                        geoPoint.latitude, geoPoint.longitude,
+                        results
+                    )
+                    results[0] <= selectedDistanceKm * 1000
+                } else {
+                   true
+                }
+            } else if (currentMode == Mode.FAVOURITES){
+                val user = currentUser
+                if (user == null) {
+                    distanceMatch = false
+                } else {
+                    distanceMatch = user.favourites.contains(court.base.id)
+                }
+            }
+            var availableMatch = true
+            if (filterAvailableOnly && court.base.courtsAvailable == 0) {
+                availableMatch = false
+            }
+            typeMatch && distanceMatch && availableMatch
+        }
+    }
+
+    private fun sortList(list : List<Court>, location : Location) : List<Court> {
+        val user = currentUser
+        if (currentMode == Mode.NEARBY) {
+            return sortByLocation(list, location)
+        } else if (currentMode == Mode.FAVOURITES && user != null) {
+            if (showRecent) {
+                return list.sortedBy { court ->
+                    user.favourites.indexOf(court.base.id)
+                }
+            } else {
+                return sortByLocation(list, location)
+            }
+        }
+        return list
+    }
+
+    private fun sortByLocation(list : List<Court>, location : Location ) : List<Court> {
+        return list.sortedBy { court ->
+            val geoPoint = court.base.geoPoint
+            if (geoPoint != null) {
+                val results = FloatArray(1)
+                Location.distanceBetween(
+                    location.latitude, location.longitude,
+                    geoPoint.latitude, geoPoint.longitude,
+                    results
+                )
+                //return distance
+                results[0]
+            } else {
+                //return max distance because no location data
+                Float.MAX_VALUE
+            }
+        }
+    }
     private fun onCourtSelected(documentId: String) {
         val args = Bundle().apply {
             putString("document_id", documentId)
