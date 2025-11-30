@@ -1,5 +1,8 @@
 package com.example.group22_opencourt.ui.main
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
 import android.util.Log
@@ -9,6 +12,8 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AdapterView
 import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
@@ -27,6 +32,9 @@ import com.example.group22_opencourt.model.UserRepository
 import com.example.group22_opencourt.ui.main.HomeRecyclerViewAdapter.ViewHolder
 import com.google.android.material.checkbox.MaterialCheckBox
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
@@ -56,6 +64,8 @@ class HomeFragment : Fragment() {
     private var currentMode: Mode = Mode.NEARBY
 
     private var currentUser : User? = null
+
+    private var permissionJob : Job? = null
 
 
     override fun onCreateView(
@@ -219,6 +229,8 @@ class HomeFragment : Fragment() {
     }
 
     private fun applyAllFilters(onSuccess: ((List<Court>) -> Unit)? = null) {
+        permissionJob?.cancel()
+        binding.locationInfoText.visibility = View.GONE
         val location = lastUserLocation
         if (location == null) {
             val user = currentUser
@@ -231,6 +243,8 @@ class HomeFragment : Fragment() {
                 }
                 adapter.setItems(sorted)
             } else if (currentMode ==  Mode.NEARBY) {
+                binding.locationInfoText.visibility = View.VISIBLE
+                monitorLocationPermissionStatus()
                 adapter.setItems(emptyList())
             }
             return
@@ -241,6 +255,14 @@ class HomeFragment : Fragment() {
 
         //sort by shortest distance
         sorted = sortList(filtered, location)
+        if (sorted.isEmpty()) {
+            binding.locationInfoText.visibility = View.VISIBLE
+            if (currentMode == Mode.FAVOURITES) {
+                binding.locationInfoText.text = "No Courts Favourited"
+            } else if (currentMode == Mode.NEARBY) {
+                binding.locationInfoText.text = "No Courts Nearby"
+            }
+        }
 
         adapter.setItems(sorted) {
             onSuccess?.invoke(sorted)
@@ -360,5 +382,33 @@ class HomeFragment : Fragment() {
             putString("document_id", documentId)
         }
         findNavController().navigate(R.id.action_homeFragment_to_courtDetailFragment, args)
+    }
+
+    private fun monitorLocationPermissionStatus() {
+        permissionJob = lifecycleScope.launch {
+            while (isActive) {
+                 if (!isLocationPermissionGranted(requireContext())) {
+                     binding.locationInfoText.text = "Location not Enabled"
+                 } else {
+                    binding.locationInfoText.text = "Fetching Location"
+                 }
+                 delay(1000)
+            }
+
+        }
+
+    }
+    fun isLocationPermissionGranted(context: Context): Boolean {
+        val fine = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        val coarse = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        return fine || coarse
     }
 }
