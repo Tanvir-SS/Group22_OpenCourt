@@ -58,7 +58,7 @@ class HomeRecyclerViewAdapter(
         holder.nameView.text = court.base.name
 //        holder.cityView.text = court.base.city
         holder.addressView.text = court.base.address
-        if (court.base.courtsAvailable > 0){
+        if (court.base.courtsAvailable != 0){
             holder.verticalBar.setBackgroundColor(ContextCompat.getColor(holder.itemView.context, R.color.oc_available))
         } else {
             holder.verticalBar.setBackgroundColor(ContextCompat.getColor(holder.itemView.context, R.color.oc_unavailable))

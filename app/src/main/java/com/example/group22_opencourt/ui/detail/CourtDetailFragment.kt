@@ -153,18 +153,27 @@ class CourtStatusAdapter(private var items: List<CourtStatus>, private val lifec
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val courtStatus = items[position]
-        holder.nameView.text = "Court ${position + 1}"
-        holder.statusView.text = if (courtStatus.courtAvailable) "Available" else "In Play"
-        // Set color bar based on status
-        if (courtStatus.courtAvailable)  {
-            holder.colorSquare.background = ContextCompat.getDrawable(holder.itemView.context, R.drawable.circle_available)
-        } else {
-            holder.colorSquare.background = ContextCompat.getDrawable(holder.itemView.context, R.drawable.x_unavailable)
-        }
-        holder.checkbox.visibility = if (showCheckbox) View.VISIBLE else View.GONE
+            val courtStatus = items[position]
+            holder.nameView.text = "Court ${position + 1}"
+            holder.statusView.text = if (courtStatus.courtAvailable) "Available" else "In Play"
 
-    }
+            // Set color bar based on status
+            if (courtStatus.courtAvailable)  {
+                holder.colorSquare.background = ContextCompat.getDrawable(holder.itemView.context, R.drawable.circle_available)
+            } else {
+                holder.colorSquare.background = ContextCompat.getDrawable(holder.itemView.context, R.drawable.x_unavailable)
+            }
+
+            holder.checkbox.visibility = if (showCheckbox) View.VISIBLE else View.GONE
+
+            // Reverse the checkbox logic: checked when unavailable, unchecked when available
+            holder.checkbox.isChecked = !courtStatus.courtAvailable
+            holder.checkbox.setOnCheckedChangeListener { _, isChecked ->
+                courtStatus.courtAvailable = !isChecked
+                // Notify the adapter that the item has changed
+                notifyItemChanged(position)
+            }
+        }
 
     override fun getItemCount(): Int = items.size
 

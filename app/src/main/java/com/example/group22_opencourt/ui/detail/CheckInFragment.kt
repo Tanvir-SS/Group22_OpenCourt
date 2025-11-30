@@ -5,7 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.CheckBox
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -15,6 +15,9 @@ import com.example.group22_opencourt.MainActivity
 import com.example.group22_opencourt.R
 import com.example.group22_opencourt.model.BasketballCourt
 import com.example.group22_opencourt.model.TennisCourt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class CheckInFragment : Fragment() {
 
@@ -39,7 +42,30 @@ class CheckInFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         viewModel.courtLiveData.observe(viewLifecycleOwner) { court ->
-            Log.d("debug", "message")
+            val checkInOutButton = view.findViewById<View>(R.id.check_in_apply)
+
+            checkInOutButton.setOnClickListener {
+                court?.let {
+                    // Iterate over courtStatus and toggle availability for all courts based on adapter state
+                    CoroutineScope(Dispatchers.IO).launch {
+                        CourtRepository.instance.updateCourt(it) { success ->
+                            if (success) {
+                                // Update the LiveData to reflect the change in availability
+                                CourtRepository.instance.updateCourtInLiveData(it)
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    Toast.makeText(requireContext(), "Court availability updated successfully.", Toast.LENGTH_SHORT).show()
+                                    requireActivity().onBackPressed()
+                                }
+                            } else {
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    Toast.makeText(requireContext(), "Failed to update court availability.", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             if (court != null) {
                 Log.d("debug", court.toString())
                 // Title: "{name} ({number of courts})"
