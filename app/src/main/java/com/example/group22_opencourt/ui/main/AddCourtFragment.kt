@@ -27,6 +27,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.group22_opencourt.R
 import com.example.group22_opencourt.model.BasketballCourt
 import com.example.group22_opencourt.model.CourtBase
+import com.example.group22_opencourt.model.CourtStatus
 import com.example.group22_opencourt.model.ImagesRepository
 import com.example.group22_opencourt.model.TennisCourt
 import kotlinx.coroutines.launch
@@ -295,7 +296,8 @@ class AddCourtFragment : Fragment() {
                 accessibility = accessibility,
                 totalCourts = totalCourts,
                 courtsAvailable = totalCourts,
-                lastUpdate = System.currentTimeMillis()
+                lastUpdate = System.currentTimeMillis(),
+                courtStatus = ArrayList(List(totalCourts) { CourtStatus() })
             )
             val repository = CourtRepository.instance
             lifecycleScope.launch {
