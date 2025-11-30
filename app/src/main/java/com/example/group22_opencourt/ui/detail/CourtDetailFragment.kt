@@ -296,44 +296,37 @@ class CourtDetailFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-    private fun setLastVerified(court : Court) {
-        val millis = court.base.lastUpdate
-        var remainingMillis = System.currentTimeMillis() - millis
+    private fun setLastVerified(court: Court) {
+        val diffMillis = System.currentTimeMillis() - court.base.lastUpdate
+        if (diffMillis < 0) {
+            lastVerifiedTextView.text = "Last Verified: just now"
+            return
+        }
 
-        val minutesInMilli = 60 * 1000L
-        val hoursInMilli = 60 * minutesInMilli
-        val daysInMilli = 24 * hoursInMilli
-        val yearsInMilli = 365 * daysInMilli  // approximate
+        val minutesTotal = diffMillis / 60_000L
+        val minutesInDay = 24 * 60L
+        val minutesInYear = 365 * minutesInDay // approximate
 
-        val years = remainingMillis / yearsInMilli
-        remainingMillis %= yearsInMilli
+        val years = minutesTotal / minutesInYear
+        val remainingAfterYears = minutesTotal % minutesInYear
 
-        val days = remainingMillis / daysInMilli
-        remainingMillis %= daysInMilli
+        val days = remainingAfterYears / minutesInDay
+        val remainingAfterDays = remainingAfterYears % minutesInDay
 
-        val hours = remainingMillis / hoursInMilli
-        remainingMillis %= hoursInMilli
-
-        val minutes = remainingMillis / minutesInMilli
+        val minutes = remainingAfterDays % 60
+        val hours = remainingAfterDays / 60
 
         val parts = mutableListOf<String>()
         parts.add("Last Verified:")
 
         if (years > 0) parts.add("$years year${if (years > 1) "s" else ""}")
         if (days > 0) parts.add("$days day${if (days > 1) "s" else ""}")
-
-        // Always show minutes if there are years or days
-        if (years > 0 || days > 0 || minutes > 0) {
-            val totalMinutes = if (years > 0 || days > 0) {
-                // include leftover hours as minutes
-                minutes + hours * 60
-            } else {
-                minutes
-            }
-            parts.add("$totalMinutes minute${if (totalMinutes > 1) "s" else ""}")
+        if (hours > 0) parts.add("$hours hour${if (hours > 1) "s" else ""}")
+        if (minutes > 0 || parts.size == 1) { // always show something
+            parts.add("$minutes minute${if (minutes != 1L) "s" else ""}")
         }
+
         parts.add("ago")
-        Log.d("debug", parts.joinToString(" "))
         lastVerifiedTextView.text = parts.joinToString(" ")
     }
     private fun weatherCodeToEmoji(code: Int): String = when (code) {
@@ -432,7 +425,9 @@ class CourtStatusAdapter(private var items: List<CourtStatus>, private val lifec
             holder.checkbox.setOnCheckedChangeListener { _, isChecked ->
                 courtStatus.courtAvailable = !isChecked
                 // Notify the adapter that the item has changed
-                notifyItemChanged(position)
+                holder.itemView.post {
+                    notifyItemChanged(position)
+                }
             }
         }
 

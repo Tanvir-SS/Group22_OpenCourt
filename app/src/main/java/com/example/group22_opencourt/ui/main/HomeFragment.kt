@@ -271,9 +271,10 @@ class HomeFragment : Fragment() {
                 binding.locationInfoText.text = "No Courts Nearby"
             }
         }
-
-        adapter.setItems(sorted) {
-            onSuccess?.invoke(sorted)
+        binding.recyclerView.post {
+            adapter.setItems(sorted) {
+                onSuccess?.invoke(sorted)
+            }
         }
     }
 

@@ -9,6 +9,7 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -19,6 +20,7 @@ import com.example.group22_opencourt.model.TennisCourt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.w3c.dom.Text
 
 class EditCourtFragment : Fragment() {
     private lateinit var viewModel: CourtDetailViewModel
@@ -36,6 +38,7 @@ class EditCourtFragment : Fragment() {
     private lateinit var accessibilityLayout: LinearLayout
     private lateinit var layoutTennisAmenities: LinearLayout
     private lateinit var layoutBasketballAmenities: LinearLayout
+    private lateinit var lastVerifiedView : TextView
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -73,7 +76,8 @@ class EditCourtFragment : Fragment() {
                 val addressView = view.findViewById<android.widget.TextView>(R.id.edit_court_address)
                 addressView.text = court.base.address
                 // Last Verified (if you want to show it)
-                val lastVerifiedView = view.findViewById<android.widget.TextView>(R.id.edit_last_verified)
+                lastVerifiedView = view.findViewById<android.widget.TextView>(R.id.edit_last_verified)
+                setLastVerified(court)
                 // lastVerifiedView.text = "Last Verified: ${court.base.lastVerified}" // Uncomment if available
             }
         }
@@ -105,6 +109,40 @@ class EditCourtFragment : Fragment() {
         }
 
         setupLayoutClickListeners()
+    }
+
+    private fun setLastVerified(court: Court) {
+        val diffMillis = System.currentTimeMillis() - court.base.lastUpdate
+        if (diffMillis < 0) {
+            lastVerifiedView.text = "Last Verified: just now"
+            return
+        }
+
+        val minutesTotal = diffMillis / 60_000L
+        val minutesInDay = 24 * 60L
+        val minutesInYear = 365 * minutesInDay // approximate
+
+        val years = minutesTotal / minutesInYear
+        val remainingAfterYears = minutesTotal % minutesInYear
+
+        val days = remainingAfterYears / minutesInDay
+        val remainingAfterDays = remainingAfterYears % minutesInDay
+
+        val minutes = remainingAfterDays % 60
+        val hours = remainingAfterDays / 60
+
+        val parts = mutableListOf<String>()
+        parts.add("Last Verified:")
+
+        if (years > 0) parts.add("$years year${if (years > 1) "s" else ""}")
+        if (days > 0) parts.add("$days day${if (days > 1) "s" else ""}")
+        if (hours > 0) parts.add("$hours hour${if (hours > 1) "s" else ""}")
+        if (minutes > 0 || parts.size == 1) { // always show something
+            parts.add("$minutes minute${if (minutes != 1L) "s" else ""}")
+        }
+
+        parts.add("ago")
+        lastVerifiedView.text = parts.joinToString(" ")
     }
 
     private fun populateAmenities(court: Court) {
@@ -142,6 +180,8 @@ class EditCourtFragment : Fragment() {
         } else if (court is BasketballCourt) {
             court.nets = checkboxNets.isChecked
         }
+
+        court.base.lastUpdate = System.currentTimeMillis()
 
         // Save updated court to repository
         CoroutineScope(Dispatchers.IO).launch {
