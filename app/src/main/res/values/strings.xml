@@ -35,6 +35,8 @@
     <string name="username">Username</string>
     <string name="username_hint">TennisPlayer12</string>
     <string name="email">Email</string>
+    <string name="email_hint">new.email@example.com</string>
+    <string name="change_email">Change email</string>
     <string name="password">Password</string>
     <string name="preferences">Preferences</string>
     <string name="notifications">Notifications</string>
@@ -43,6 +45,7 @@
     <string name="save">Save</string>
     <string name="other_settings">Other Settings</string>
     <string name="other_settings_hint">4</string>
+    <string name="sign_out">Sign Out</string>
 
     <string-array name="map_types">
         <item>Normal</item>

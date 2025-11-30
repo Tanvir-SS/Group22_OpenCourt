@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/settingsScrollView"
     android:layout_width="match_parent"
@@ -14,20 +13,20 @@
         android:orientation="vertical"
         android:padding="24dp">
 
+        <!-- Email field (kept, renamed from username) -->
         <LinearLayout
-            android:id="@+id/layoutSettingsUserName"
+            android:id="@+id/layoutSettingsEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="@color/oc_card"
             android:padding="8dp"
-            android:layout_marginBottom="8dp"
             android:layout_marginTop="8dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/username"
+                android:text="@string/email"
                 android:textStyle="bold"
                 android:textColor="@color/oc_text_primary"
                 android:textSize="14sp" />
@@ -35,129 +34,79 @@
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
+
                 <EditText
-                    android:id="@+id/editTextUsername"
+                    android:id="@+id/editTextEmail"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@android:color/transparent"
-                    android:hint="@string/username_hint"
+                    android:hint="@string/email_hint"
                     android:paddingStart="0dp"
-                    android:paddingEnd="32dp"
+                    android:paddingEnd="0dp"
                     android:textColor="@color/oc_text_primary"
                     android:textSize="16sp"
-                    android:inputType="textPersonName"
-                    android:autofillHints="username" />
-                <ImageView
-                    android:id="@+id/clearUsername"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/cancel_outlined"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:contentDescription="@string/clear"
-                    app:tint="@color/oc_icon_tint"/>
+                    android:inputType="textEmailAddress"
+                    android:autofillHints="emailAddress" />
+
+                <!-- Removed clear (x) icon -->
+
             </RelativeLayout>
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/layoutSettingsFavLocation"
-            android:layout_width="match_parent"
+        <!-- Small clickable highlighted 'Change email' text -->
+        <TextView
+            android:id="@+id/textChangeEmail"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@color/oc_card"
-            android:padding="8dp"
-            android:layout_marginBottom="8dp">
+            android:text="@string/change_email"
+            android:textColor="@color/oc_primary"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground"
+            android:padding="4dp"
+            android:contentDescription="@string/change_email" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/address"
-                android:textStyle="bold"
-                android:textColor="@color/oc_text_primary"
-                android:textSize="14sp" />
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <EditText
-                    android:id="@+id/editTextFavLocation"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@android:color/transparent"
-                    android:hint="@string/address_hint"
-                    android:paddingStart="0dp"
-                    android:paddingEnd="32dp"
-                    android:textColor="@color/oc_text_primary"
-                    android:textSize="16sp"
-                    android:inputType="textPostalAddress"
-                    android:autofillHints="postalAddress" />
-                <ImageView
-                    android:id="@+id/clearFavLocation"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/cancel_outlined"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:contentDescription="@string/clear"
-                    app:tint="@color/oc_icon_tint"/>
-            </RelativeLayout>
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/layoutSettingsOther"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@color/oc_card"
-            android:padding="8dp"
-            android:layout_marginBottom="8dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/other_settings"
-                android:textStyle="bold"
-                android:textColor="@color/oc_text_primary"
-                android:textSize="14sp" />
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <EditText
-                    android:id="@+id/editTextOtherSettings"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@android:color/transparent"
-                    android:hint="@string/other_settings_hint"
-                    android:paddingStart="0dp"
-                    android:paddingEnd="32dp"
-                    android:textColor="@color/oc_text_primary"
-                    android:textSize="16sp"
-                    android:inputType="text"
-                    android:autofillHints="username" />
-                <ImageView
-                    android:id="@+id/clearOtherSettings"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/cancel_outlined"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:contentDescription="@string/clear"
-                    app:tint="@color/oc_icon_tint"/>
-            </RelativeLayout>
-        </LinearLayout>
+        <!-- Removed favorite location and other settings blocks -->
 
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1" />
 
+        <LinearLayout
+            android:id="@+id/changeEmailLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <Button
+                android:id="@+id/saveButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="50dp"
+                android:layout_marginEnd="25dp"
+                android:layout_weight="1"
+                android:text="Save" />
+
+            <Button
+                android:id="@+id/cancelButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="50dp"
+                android:layout_weight="1"
+                android:backgroundTint="@color/quantum_grey"
+                android:text="Cancel" />
+        </LinearLayout>
+
         <Button
-            android:id="@+id/buttonSaveSettings"
+            android:id="@+id/buttonSignOut"
             android:layout_width="120dp"
             android:layout_height="48dp"
             android:layout_gravity="center_horizontal"
-            android:text="@string/save"
+            android:text="@string/sign_out"
             android:textColor="@color/white"
             android:textStyle="bold"
             android:backgroundTint="@color/oc_primary"
