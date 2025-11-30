@@ -1,6 +1,5 @@
 package com.example.group22_opencourt.ui.detail
 
-import CourtRepository
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -39,8 +38,6 @@ import kotlinx.coroutines.withContext
 
 //for weather
 
-import android.location.Geocoder
-import android.widget.ProgressBar
 import java.util.Locale
 
 import android.Manifest

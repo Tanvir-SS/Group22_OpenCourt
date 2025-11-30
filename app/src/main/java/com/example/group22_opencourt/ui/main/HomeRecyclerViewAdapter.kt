@@ -1,7 +1,6 @@
 package com.example.group22_opencourt.ui.main
 
 import android.location.Location
-import android.provider.ContactsContract
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -18,16 +17,7 @@ import com.example.group22_opencourt.model.Court
 import com.example.group22_opencourt.model.ImagesRepository
 import com.example.group22_opencourt.model.TennisCourt
 import com.example.group22_opencourt.model.User
-import com.example.group22_opencourt.model.UserRepository
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.MarkerOptions
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.util.Locale
-import kotlin.collections.get
 
 class HomeRecyclerViewAdapter(
     private var courtList: List<Court>,

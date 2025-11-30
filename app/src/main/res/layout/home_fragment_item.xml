@@ -125,7 +125,7 @@
             android:contentDescription="Court Type"
             android:layout_marginTop="5dp"
             android:src="@drawable/ic_heart"
-            android:visibility="invisible"
+            android:visibility="visible"
             app:layout_constraintStart_toEndOf="@id/court_type_icon"
             app:layout_constraintTop_toBottomOf="@id/court_distance_text"/>
 
