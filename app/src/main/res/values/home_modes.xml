@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Entries used by the HomeFragment spinner: position 0 = Nearby Courts, 1 = Favourites -->
+    <string-array name="home_modes">
+        <item>Nearby Courts</item>
+        <item>Favourites</item>
+    </string-array>
+
+    <!-- Preview-only entries for tools in layout editor -->
+    <string-array name="home_modes_preview">
+        <item>Nearby Courts</item>
+        <item>Favourites</item>
+    </string-array>
+</resources>
+

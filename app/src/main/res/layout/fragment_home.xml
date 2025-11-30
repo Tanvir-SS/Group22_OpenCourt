@@ -21,13 +21,15 @@
         android:paddingTop="8dp"
         android:paddingBottom="8dp">
 
-        <TextView
-            android:id="@+id/textView2"
+        <!-- Spinner for switching between Nearby Courts and Favourites -->
+        <Spinner
+            android:id="@+id/home_mode_spinner"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Nearby Courts"
-            android:textSize="24sp" />
+            android:spinnerMode="dropdown"
+            android:entries="@array/home_modes"
+            tools:entries="@array/home_modes_preview" />
 
         <Button
             android:id="@+id/filter_button"
@@ -37,18 +39,34 @@
             android:contentDescription="Filter" />
     </LinearLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_view"
-        android:name="com.example.group22_opencourt.ui.main.ItemFragment"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layoutManager="LinearLayoutManager"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/header_container"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:scrollbars="vertical"
-        android:fadeScrollbars="true"
-        tools:context=".ui.main.HomeFragment"
-        tools:listitem="@layout/home_fragment_item" />
+        app:layout_constraintBottom_toBottomOf="parent">
+
+
+        <TextView
+            android:id="@+id/locationInfoText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/black"
+            android:textSize="20sp"
+            android:layout_marginStart="20dp"
+            android:visibility="gone"
+            tools:visibility="visible"
+            android:text="TextView" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_view"
+            android:name="com.example.group22_opencourt.ui.main.ItemFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fadeScrollbars="true"
+            android:scrollbars="vertical"
+            app:layoutManager="LinearLayoutManager"
+            tools:context=".ui.main.HomeFragment"
+            tools:listitem="@layout/home_fragment_item" />
+    </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

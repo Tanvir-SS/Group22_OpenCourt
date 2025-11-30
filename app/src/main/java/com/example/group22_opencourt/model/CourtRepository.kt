@@ -7,6 +7,7 @@ import com.example.group22_opencourt.model.Court
 import com.example.group22_opencourt.model.TennisCourt
 import com.example.group22_opencourt.model.BasketballCourt
 import com.example.group22_opencourt.model.FirestoreDocumentLiveData
+import com.example.group22_opencourt.model.ImagesRepository
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.*
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +20,7 @@ import java.net.URLEncoder
 class CourtRepository private constructor() {
 
     private val db = Firebase.firestore
-    private val courtsCollection = db.collection("courts")
+    private val courtsCollection = db.collection("courts2")
 
     private val _courts = MutableLiveData<List<Court>>()
     val courts: LiveData<List<Court>> = _courts
@@ -118,80 +119,5 @@ class CourtRepository private constructor() {
 
     companion object {
         val instance: CourtRepository by lazy { CourtRepository() }
-
-        fun loadPhoto(court : Court, imageView : ImageView) {
-            if (court.base.photoURL.isEmpty()) {
-                return
-            }
-            val photoUrl =
-                "https://maps.googleapis.com/maps/api/place/photo" +
-                        "?maxwidth=400" +
-                        "&photoreference=${court.base.photoURL}" +
-                        "&key=${BuildConfig.MAPS_API_KEY}"
-            Glide.with(imageView.context)
-                .load(photoUrl)
-                .into(imageView)
-        }
-
-        fun loadMapPhoto(court : Court, imageView : ImageView) {
-            val geoPoint = court.base.geoPoint ?: return
-            val lat = geoPoint.latitude
-            val lng = geoPoint.longitude
-
-            val mapUrl =
-                "https://maps.googleapis.com/maps/api/staticmap" +
-                        "?center=$lat,$lng" +
-                        "&zoom=16" +
-                        "&size=600x400" +
-                        "&markers=color:red%7C$lat,$lng" +
-                        "&key=${BuildConfig.MAPS_API_KEY}"
-
-            Glide.with(imageView.context)
-                .load(mapUrl)
-                .into(imageView)
-        }
-
-        suspend fun getGeoPointFromAddress(address: String): Pair<GeoPoint, String>? {
-            return withContext(Dispatchers.IO) {
-
-                val client = OkHttpClient()
-
-                val encodedAddress = URLEncoder.encode(address, "UTF-8")
-
-                val url =
-                    "https://maps.googleapis.com/maps/api/geocode/json" +
-                            "?address=$encodedAddress" +
-                            "&region=ca" +
-                            "&key=${BuildConfig.MAPS_API_KEY}"
-
-                val request = Request.Builder()
-                    .url(url)
-                    .build()
-
-                val response = client.newCall(request).execute()
-
-                if (!response.isSuccessful) return@withContext null
-
-                val body = response.body?.string() ?: return@withContext null
-
-                val json = JSONObject(body)
-
-                val results = json.getJSONArray("results")
-                if (results.length() == 0) return@withContext null
-
-                val firstResult = results.getJSONObject(0)
-
-                val formattedAddress = firstResult.getString("formatted_address")
-
-                val location = firstResult
-                    .getJSONObject("geometry")
-                    .getJSONObject("location")
-
-                val lat = location.getDouble("lat")
-                val lng = location.getDouble("lng")
-
-                return@withContext Pair(GeoPoint(lat, lng), formattedAddress)
-            }
-        }
     }
 }

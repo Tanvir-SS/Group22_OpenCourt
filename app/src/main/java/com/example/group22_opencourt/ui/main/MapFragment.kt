@@ -88,7 +88,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
             mapFragment!!.getMapAsync(this)
         }
         if (!Places.isInitialized()) {
-            Places.initialize(requireContext(), BuildConfig.MAPS_API_KEY)
+            Places.initializeWithNewPlacesApiEnabled(requireContext(), BuildConfig.MAPS_API_KEY)
         }
         placesClient= Places.createClient(requireContext())
 
