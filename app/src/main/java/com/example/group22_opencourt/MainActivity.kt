@@ -24,6 +24,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.navigation.findNavController
 
 import com.example.group22_opencourt.databinding.ActivityMainBinding
+import com.example.group22_opencourt.model.UserRepository
 import com.google.android.libraries.places.api.Places
 import com.google.firebase.auth.FirebaseAuth
 import org.w3c.dom.Text
@@ -52,6 +53,8 @@ class MainActivity : AppCompatActivity(), LocationListener {
             finish()
         } else {
             checkPermissions()
+            UserRepository.instance.listenCurrentUser()
+            CourtRepository.instance.listenCourtsByCity("")
         }
         //        // Set up NavController from NavHostFragment
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment

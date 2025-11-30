@@ -47,6 +47,8 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import com.example.group22_opencourt.model.User
+import com.example.group22_opencourt.model.UserRepository
 
 
 class CourtDetailFragment : Fragment(), OnMapReadyCallback {
@@ -65,6 +67,14 @@ class CourtDetailFragment : Fragment(), OnMapReadyCallback {
     private var lastWeatherAddress: String? = null
 
     private var pendingStart: (() -> Unit)? = null
+
+    private lateinit var favouriteImgView : ImageView
+
+    private var favourited = false
+
+    private var currUser : User? = null
+
+    private var court : Court? = null
 
     private val requestNotifPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -94,6 +104,23 @@ class CourtDetailFragment : Fragment(), OnMapReadyCallback {
         lastVerifiedTextView = view.findViewById(R.id.last_verified)
         adapter = CourtStatusAdapter(emptyList(), lifecycleScope)
         courtsRecyclerView.adapter = adapter
+        favouriteImgView = view.findViewById(R.id.heartImage)
+
+        UserRepository.instance.currentUser.observe(viewLifecycleOwner) {user ->
+            Log.d("details", user.toString())
+            if (user == null) {
+                favouriteImgView.setImageResource(R.drawable.heart_outline)
+                return@observe
+            }
+            currUser = user
+            if (user.favourites.contains(documentId)) {
+                favourited = true
+                favouriteImgView.setImageResource(R.drawable.heart_filled)
+            } else {
+                favourited= false
+                 favouriteImgView.setImageResource(R.drawable.heart_outline)
+            }
+        }
 
         //Weather UI (NEW)
         val weatherValue = view.findViewById<android.widget.TextView>(R.id.weather_value)
@@ -131,6 +158,7 @@ class CourtDetailFragment : Fragment(), OnMapReadyCallback {
 
         viewModel.courtLiveData.observe(viewLifecycleOwner) { court ->
             Log.d("map", "court loaded")
+            this@CourtDetailFragment.court = court
             if (court != null) {
                 val icon : ImageView = view.findViewById(R.id.court_icon_type)
                 when (court) {
@@ -210,6 +238,33 @@ class CourtDetailFragment : Fragment(), OnMapReadyCallback {
                                 viewModel.loadWeather(latLon.first, latLon.second)
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        favouriteImgView.setOnClickListener {
+            Log.d("details", "image clicked")
+            val currCourt = court
+            if (currCourt == null) {
+                return@setOnClickListener
+            }
+            val userInstance = currUser
+            if (userInstance == null) {
+                return@setOnClickListener
+            }
+            if (favourited) {
+                userInstance.favourites.remove(currCourt.base.id)
+                UserRepository.instance.createOrUpdateUser(userInstance) {
+                    if (it) {
+                        Toast.makeText(requireContext(), "unfavorited court", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } else {
+                userInstance.favourites.add(0, currCourt.base.id)
+                UserRepository.instance.createOrUpdateUser(userInstance) {
+                    if (it) {
+                        Toast.makeText(requireContext(), "court added to favourites", Toast.LENGTH_SHORT).show()
                     }
                 }
             }

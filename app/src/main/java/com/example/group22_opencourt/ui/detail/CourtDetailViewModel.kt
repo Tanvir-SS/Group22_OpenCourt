@@ -8,6 +8,7 @@ import com.example.group22_opencourt.model.Court
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.group22_opencourt.model.CurrentWeather
+import com.example.group22_opencourt.model.UserRepository
 import com.example.group22_opencourt.model.WeatherRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
