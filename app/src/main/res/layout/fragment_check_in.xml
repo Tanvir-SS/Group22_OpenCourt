@@ -29,6 +29,17 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical">
 
+                <ImageView
+                    android:id="@+id/courtcheckin_type_icon"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:layout_marginRight="10dp"
+                    android:contentDescription="Court Type"
+                    android:src="@drawable/ic_tennis_ball"
+                    app:layout_constraintStart_toEndOf="@id/court_info_layout"
+                    app:layout_constraintTop_toBottomOf="@id/court_distance_text"/>
+
                 <TextView
                     android:id="@+id/check_in_court_title"
                     android:layout_width="0dp"

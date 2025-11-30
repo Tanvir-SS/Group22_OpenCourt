@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.CheckBox
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -58,10 +59,14 @@ class EditCourtFragment : Fragment() {
                 // Title: "{name} ({number of courts})"
                 val titleView = view.findViewById<android.widget.TextView>(R.id.edit_court_title)
                 var titleString = ""
-                when (court) {
-                    is TennisCourt -> titleString = "Tennis - "
-                    is BasketballCourt -> titleString = "Basketball - "
+                // Set iconType based on court type
+                val iconType = when (court) {
+                    is TennisCourt -> R.drawable.ic_tennis_ball
+                    is BasketballCourt -> R.drawable.ic_basketball_ball
+                    else -> R.drawable.ic_launcher_foreground
                 }
+                val iconView = view.findViewById<ImageView>(R.id.courtedit_type_icon)
+                iconView.setImageResource(iconType)
                 titleString += "${court.base.name} (${court.base.totalCourts})"
                 titleView.text = titleString
                 // Address

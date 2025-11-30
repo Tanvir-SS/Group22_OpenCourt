@@ -107,7 +107,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
                 R.id.settingsFragment -> "Settings"
                 R.id.courtDetailFragment -> "Court Detail"
                 R.id.editCourtFragment -> "Edit Court"
-                R.id.checkInFragment -> "Check In"
+                R.id.checkInFragment -> "Check In or Out"
                 else -> "OpenCourt"
             }
         }

@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -53,12 +54,12 @@ class CheckInFragment : Fragment() {
                                 // Update the LiveData to reflect the change in availability
                                 CourtRepository.instance.updateCourtInLiveData(it)
                                 CoroutineScope(Dispatchers.Main).launch {
-                                    Toast.makeText(requireContext(), "Court availability updated successfully.", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(requireContext(), "Courts Updated.", Toast.LENGTH_SHORT).show()
                                     requireActivity().onBackPressed()
                                 }
                             } else {
                                 CoroutineScope(Dispatchers.Main).launch {
-                                    Toast.makeText(requireContext(), "Failed to update court availability.", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(requireContext(), "Failed to Update Courts.", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
@@ -71,10 +72,14 @@ class CheckInFragment : Fragment() {
                 // Title: "{name} ({number of courts})"
                 val titleView = view.findViewById<android.widget.TextView>(R.id.check_in_court_title)
                 var titleString = ""
-                when (court) {
-                    is TennisCourt -> titleString = "Tennis - "
-                    is BasketballCourt -> titleString = "Basketball - "
+                // Set iconType based on court type
+                val iconType = when (court) {
+                    is TennisCourt -> R.drawable.ic_tennis_ball
+                    is BasketballCourt -> R.drawable.ic_basketball_ball
+                    else -> R.drawable.ic_launcher_foreground
                 }
+                val iconView = view.findViewById<ImageView>(R.id.courtcheckin_type_icon)
+                iconView.setImageResource(iconType)
                 titleString += "${court.base.name} (${court.base.totalCourts})"
                 titleView.text = titleString
                 // Address
