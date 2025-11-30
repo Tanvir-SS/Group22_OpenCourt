@@ -17,6 +17,10 @@ import com.example.group22_opencourt.model.BasketballCourt
 import com.example.group22_opencourt.model.Court
 import com.example.group22_opencourt.model.ImagesRepository
 import com.example.group22_opencourt.model.TennisCourt
+import com.example.group22_opencourt.model.User
+import com.example.group22_opencourt.model.UserRepository
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -26,10 +30,17 @@ import java.util.Locale
 import kotlin.collections.get
 
 class HomeRecyclerViewAdapter(
-    private var courtList: List<Court>, private val onItemClick: ((Court) -> Unit)? = null)
-    : RecyclerView.Adapter<HomeRecyclerViewAdapter.ViewHolder>() {
+    private var courtList: List<Court>,
+    private val onItemClick: ((Court) -> Unit)? = null,
+    private var currentUser: User? = null
+) : RecyclerView.Adapter<HomeRecyclerViewAdapter.ViewHolder>() {
 
     var location : Location? = null
+
+    fun updateCurrentUser(user: User?) {
+        currentUser = user
+        notifyDataSetChanged()
+    }
 
     class ViewHolder(val binding: HomeFragmentItemBinding) : RecyclerView.ViewHolder(binding.root) {
         val nameView: TextView = binding.courtNameText
@@ -85,7 +96,6 @@ class HomeRecyclerViewAdapter(
             holder.distanceView.text = "-.- km"
         }
 
-
         when (court) {
             is BasketballCourt -> {
                 if (court.base.photoUri.isNotEmpty() && court.base.photoUri != ImagesRepository.URI_NON_EXIST){
@@ -112,6 +122,17 @@ class HomeRecyclerViewAdapter(
             else -> R.drawable.ic_launcher_foreground
         }
         holder.binding.courtTypeIcon.setImageResource(iconRes)
+
+        // if court is favorite, show the favorite icon
+        val favourites = currentUser?.favourites
+        Log.d("HomeRecycler", "favourites: $favourites")
+        val isFavourite = favourites?.contains(court.base.id)
+        Log.d("HomeRecycler", "isFavourite: $isFavourite")
+        if (isFavourite == true) {
+            holder.binding.favouriteIcon.visibility = View.VISIBLE
+        } else {
+            holder.binding.favouriteIcon.visibility = View.INVISIBLE
+        }
     }
 
     override fun getItemCount(): Int {

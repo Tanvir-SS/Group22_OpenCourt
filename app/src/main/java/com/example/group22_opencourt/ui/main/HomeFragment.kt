@@ -63,7 +63,7 @@ class HomeFragment : Fragment() {
     private enum class Mode { NEARBY, FAVOURITES }
     private var currentMode: Mode = Mode.NEARBY
 
-    private var currentUser : User? = null
+    var currentUser : User? = null
 
     private var permissionJob : Job? = null
 
@@ -91,14 +91,22 @@ class HomeFragment : Fragment() {
                 longitude = longitude1
             }
         }
-        adapter = HomeRecyclerViewAdapter(emptyList()) {
-            onCourtSelected(it.base.id)
-        }
+        adapter = HomeRecyclerViewAdapter(
+            courtList = emptyList(),
+            currentUser = currentUser,
+            onItemClick = {
+                onCourtSelected(it.base.id)
+            }
+        )
         binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
         UserRepository.instance.currentUser.observe(viewLifecycleOwner) {
             currentUser = it
+            adapter.updateCurrentUser(it)
+            adapter.setItems(courts) {
+                Log.d("HomeFragment", "Adapter updated with new user favorites")
+            }
         }
 
 
@@ -412,4 +420,5 @@ class HomeFragment : Fragment() {
 
         return fine || coarse
     }
+
 }
