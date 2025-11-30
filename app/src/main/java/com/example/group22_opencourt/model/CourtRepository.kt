@@ -106,6 +106,16 @@ class CourtRepository private constructor() {
         return FirestoreDocumentLiveData(courtsCollection.document(id))
     }
 
+    /** Update a specific court in the LiveData */
+    fun updateCourtInLiveData(updatedCourt: Court) {
+        val currentCourts = _courts.value?.toMutableList() ?: mutableListOf()
+        val index = currentCourts.indexOfFirst { it.base.id == updatedCourt.base.id }
+        if (index != -1) {
+            currentCourts[index] = updatedCourt
+            _courts.postValue(currentCourts)
+        }
+    }
+
     companion object {
         val instance: CourtRepository by lazy { CourtRepository() }
 

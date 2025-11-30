@@ -69,14 +69,6 @@
                         android:text="Court 1"
                         android:textSize="18sp" />
 
-                    <ImageView
-                        android:id="@+id/court_type_icon"
-                        android:layout_width="18dp"
-                        android:layout_height="18dp"
-                        android:layout_gravity="center"
-                        android:contentDescription="Court Type"
-                        android:layout_marginStart="5dp"
-                        android:src="@drawable/ic_tennis" />
                 </LinearLayout>
 
             </LinearLayout>
@@ -113,6 +105,17 @@
             android:text="0.1km"
             app:layout_constraintEnd_toStartOf="@+id/arrow_right_icon"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/court_type_icon"
+            android:layout_width="15dp"
+            android:layout_height="15dp"
+            android:layout_gravity="center"
+            android:contentDescription="Court Type"
+            android:layout_marginTop="5dp"
+            android:src="@drawable/ic_tennis_ball"
+            app:layout_constraintStart_toEndOf="@id/court_info_layout"
+            app:layout_constraintTop_toBottomOf="@id/court_distance_text"/>
 
         <TextView
             android:id="@+id/available_courts_text"
