@@ -270,6 +270,7 @@ class HomeFragment : Fragment() {
     }
 
     fun updateUserLocation(location: Location) {
+        Log.d("location", "recieved in home fragment")
         val lastLocation = lastUserLocation
         var shouldUpdate = lastLocation == null || location.distanceTo(lastLocation) > locationUpdateThresholdMeters
         if (!this::binding.isInitialized) {
