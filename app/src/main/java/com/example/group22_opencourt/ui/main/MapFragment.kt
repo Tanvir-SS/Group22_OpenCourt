@@ -43,6 +43,8 @@ import android.widget.TextView
 import com.example.group22_opencourt.model.BasketballCourt
 import com.example.group22_opencourt.model.Court
 import com.example.group22_opencourt.model.TennisCourt
+import com.example.group22_opencourt.model.User
+import com.example.group22_opencourt.model.UserRepository
 import kotlin.text.clear
 import kotlin.text.compareTo
 import kotlin.times
@@ -65,6 +67,8 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
     private var showBasketball = true
     private var selectedDistanceKm = 5 // Default distance
     private val distanceIntervals = listOf(1, 2, 5, 10, 25)
+
+    private var currentUser : User? = null
 
     // binding setup
     override fun onCreateView(
@@ -91,6 +95,10 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
             Places.initializeWithNewPlacesApiEnabled(requireContext(), BuildConfig.MAPS_API_KEY)
         }
         placesClient= Places.createClient(requireContext())
+
+        UserRepository.instance.currentUser.observe(viewLifecycleOwner) {
+            currentUser = it
+        }
 
         // Filter button logic
         binding.filterButton.setOnClickListener {
@@ -294,6 +302,8 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
                 )
             }
+            val favourites = currentUser?.favourites
+            Log.d("MapFragment", "Current user favourites: $favourites")
 
             for (court in courts) {
                 val geoPoint = court.base.geoPoint
@@ -307,11 +317,21 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
                     // Apply filters: court type and distance
                     if (((court is TennisCourt && showTennis) || (court is BasketballCourt && showBasketball)) &&
                         distanceMeters <= selectedDistanceKm * 1000) {
+
+                        val isFavourite = favourites?.contains(court.base.id)
+                        Log.d("MapFragment", "Court ID: ${court.base.id}, Is Favourite: $isFavourite")
+
+                        val markerColor = if (isFavourite == true) {
+                            BitmapDescriptorFactory.HUE_GREEN
+                        } else {
+                            BitmapDescriptorFactory.HUE_RED
+                        }
+
                         val marker = map.addMarker(
                             MarkerOptions()
                                 .position(LatLng(geoPoint.latitude, geoPoint.longitude))
                                 .title(court.base.name)
-                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+                                .icon(BitmapDescriptorFactory.defaultMarker(markerColor))
                         )
                         marker?.tag = court
                     }
