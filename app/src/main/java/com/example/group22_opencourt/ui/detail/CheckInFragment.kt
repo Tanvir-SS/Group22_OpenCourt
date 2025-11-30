@@ -1,5 +1,6 @@
 package com.example.group22_opencourt.ui.detail
 
+import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -47,7 +48,24 @@ class CheckInFragment : Fragment() {
 
             checkInOutButton.setOnClickListener {
                 court?.let {
-                    // Iterate over courtStatus and toggle availability for all courts based on adapter state
+                    val userLocation = (activity as? MainActivity)?.currentLocation
+                    if (userLocation != null) {
+                        val courtLocation = Location("").apply {
+                            latitude = court.base.geoPoint?.latitude!!
+                            longitude = court.base.geoPoint?.longitude!!
+                        }
+                        val distance = userLocation.distanceTo(courtLocation)
+
+                        if (distance > 200) {
+                            Toast.makeText(requireContext(), "Must be Within 200m to Check In or Out.", Toast.LENGTH_SHORT).show()
+                            return@setOnClickListener
+                        }
+                    } else {
+                        Toast.makeText(requireContext(), "Unable to Determine your Location.", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+
+                    // Proceed with the existing check-in logic
                     CoroutineScope(Dispatchers.IO).launch {
                         // Update the courtsAvailable field based on the courtStatus list
                         val availableCount = court.base.courtStatus.count { it.courtAvailable }
@@ -59,12 +77,12 @@ class CheckInFragment : Fragment() {
                                 // Update the LiveData to reflect the change in availability
                                 CourtRepository.instance.updateCourtInLiveData(court)
                                 CoroutineScope(Dispatchers.Main).launch {
-                                    Toast.makeText(requireContext(), "Courts Updated.", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(requireContext(), "Court Availability Updated.", Toast.LENGTH_SHORT).show()
                                     requireActivity().onBackPressed()
                                 }
                             } else {
                                 CoroutineScope(Dispatchers.Main).launch {
-                                    Toast.makeText(requireContext(), "Failed to Update Courts.", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(requireContext(), "Failed to Update Court Availability.", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
@@ -92,7 +110,7 @@ class CheckInFragment : Fragment() {
                 addressView.text = court.base.address
                 // Last Verified (if you want to show it)
                 val lastVerifiedView = view.findViewById<android.widget.TextView>(R.id.check_in_last_verified)
-                // lastVerifiedView.text = "Last Verified: ${court.base.lastVerified}" // Uncomment if available
+//                 lastVerifiedView.text = "Last Verified: ${court.base.lastVerified}" // Uncomment if available
 
                 adapter.setItems(court.base.courtStatus)
             }
