@@ -61,6 +61,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
     private var hasCenteredOnUser = false
     private val viewModel: HomeViewModel by activityViewModels()
     private var currentReferenceLocation: Location? = null
+    // Blue marker used for search / long-press "hold to pin"
     private var searchMarker: Marker? = null
 
     // filter state
@@ -71,6 +72,9 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
 
     // current user data
     private var currentUser : User? = null
+
+    // Markers representing courts currently drawn on the map
+    private val courtMarkers = mutableListOf<Marker>()
 
     // binding setup
     override fun onCreateView(
@@ -300,16 +304,9 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
         // observe courts from ViewModel and update map markers
         val referenceLocation = currentReferenceLocation ?: getUserLocation()
         viewModel.courts.observe(viewLifecycleOwner) { courts ->
-            map.clear()
-            searchMarker?.let { marker ->
-                // Re-add the search marker after clearing the map
-                searchMarker = map.addMarker(
-                    MarkerOptions()
-                        .position(marker.position)
-                        .title(marker.title)
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
-                )
-            }
+            // Clear only court markers, leave searchMarker (blue pin) alone
+            courtMarkers.forEach { it.remove() }
+            courtMarkers.clear()
 
             // get current user favourites
             val favourites = currentUser?.favourites
@@ -346,7 +343,10 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
                                 .title(court.base.name)
                                 .icon(BitmapDescriptorFactory.defaultMarker(markerColor))
                         )
-                        marker?.tag = court // attach court data to marker
+                        marker?.let {
+                            it.tag = court // attach court data to marker
+                            courtMarkers.add(it)
+                        }
                     }
                 } else {
                     Log.w("MapFragment", "Court ${court.base.name} does not have a valid GeoPoint")
@@ -441,8 +441,11 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
     override fun onMyLocationButtonClick(): Boolean {
         // reset the flag so camera recenters
         mapMovedByUser = false
-        searchMarker?.remove()
-        map.clear()
+
+        // Do NOT clear the whole map; just clear court markers.
+        courtMarkers.forEach { it.remove() }
+        courtMarkers.clear()
+
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             // get user location and center map
             val location = getUserLocation()
