@@ -12,11 +12,9 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AdapterView
 import android.widget.LinearLayout
-import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -89,18 +87,10 @@ class HomeFragment : Fragment() {
             DividerItemDecoration.VERTICAL
         )
         binding.recyclerView.addItemDecoration(dividerItemDecoration)
-        val latitude1 = arguments?.getDouble("latitude") ?: 0.0
-        val longitude1 = arguments?.getDouble("longitude") ?: 0.0
-        if (latitude1 != 0.0) {
-            lastUserLocation = Location("manual").apply {
-                latitude = latitude1
-                longitude = longitude1
-            }
-        }
+        setInitialLocation()
+
         // Setup RecyclerView and its adapter
-        adapter = HomeRecyclerViewAdapter(
-            courtList = emptyList(),
-            currentUser = currentUser,
+        adapter = HomeRecyclerViewAdapter(courtList = emptyList(), currentUser = currentUser,
             onItemClick = {
                 onCourtSelected(it.base.id)
             }
@@ -118,6 +108,16 @@ class HomeFragment : Fragment() {
         }
 
         // Observe courts from ViewModel and update adapter
+        handleCourtsFromRepository()
+
+        // Filter button logic
+        handleFilterButton()
+
+        // Setup mode spinner
+        setupModeSpinner()
+    }
+
+    private fun handleCourtsFromRepository() {
         viewModel.courts.observe(viewLifecycleOwner) { courts ->
             this@HomeFragment.courts = courts
             lifecycleScope.launch {
@@ -134,83 +134,7 @@ class HomeFragment : Fragment() {
                 Log.d("debug", "onsuccess")
             }
         }
-
-        // Filter button logic
-        binding.filterButton.setOnClickListener {
-            // Show popup window with filter options
-            val inflater = LayoutInflater.from(requireContext())
-            val popupView = inflater.inflate(R.layout.filter_popup, null)
-            val minWidthPx = (180 * resources.displayMetrics.density).toInt()
-            val buttonWidth = binding.filterButton.width
-            val popupWidth = if (buttonWidth > minWidthPx) buttonWidth else minWidthPx
-            val popupWindow = android.widget.PopupWindow(
-                popupView,
-                popupWidth,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                true
-            )
-            popupWindow.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
-            popupWindow.isOutsideTouchable = true
-
-            // Set initial checkbox states
-            val tennisCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(
-                R.id.checkbox_tennis)
-            val basketballCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.checkbox_basketball)
-            val availableCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.checkbox_available)
-            val recentContainer : LinearLayout = popupView.findViewById(R.id.sort_recent_container)
-            val nearbyContainer : LinearLayout = popupView.findViewById(R.id.distance_container)
-            if (currentMode == Mode.NEARBY) {
-                recentContainer.visibility = View.GONE
-                nearbyContainer.visibility = View.VISIBLE
-            } else if (currentMode == Mode.FAVOURITES) {
-                recentContainer.visibility = View.VISIBLE
-                nearbyContainer.visibility = View.GONE
-            }
-            tennisCheck.isChecked = showTennis
-            basketballCheck.isChecked = showBasketball
-            availableCheck.isChecked = filterAvailableOnly
-
-            // Checkbox listeners
-            tennisCheck.setOnCheckedChangeListener { _, isChecked ->
-                showTennis = isChecked
-                applyAllFilters()
-            }
-            basketballCheck.setOnCheckedChangeListener { _, isChecked ->
-                showBasketball = isChecked
-                applyAllFilters()
-            }
-            availableCheck.setOnCheckedChangeListener { _, isChecked ->
-                filterAvailableOnly = isChecked
-                applyAllFilters()
-            }
-
-            // Recent sorting checkbox logic
-            val recentCheck = popupView.findViewById<MaterialCheckBox>(R.id.checkbox_recent)
-            recentCheck.isChecked = showRecent
-            recentCheck.setOnCheckedChangeListener { _, isChecked ->
-                showRecent = isChecked
-                applyAllFilters()
-            }
-
-            //  Distance slider logic
-            val distanceSlider = popupView.findViewById<com.google.android.material.slider.Slider>(R.id.distance_slider)
-            val distanceValue = popupView.findViewById<android.widget.TextView>(R.id.distance_value)
-            // Set initial slider position
-            val initialIndex = distanceIntervals.indexOf(selectedDistanceKm)
-            distanceSlider.value = if (initialIndex >= 0) initialIndex.toFloat() else 0f
-            distanceValue.text = "${distanceIntervals[distanceSlider.value.toInt()]} km"
-            distanceSlider.addOnChangeListener { _, value, _ ->
-                selectedDistanceKm = distanceIntervals[value.toInt()]
-                distanceValue.text = "${selectedDistanceKm} km"
-                applyAllFilters()
-            }
-            val xOffset = binding.filterButton.width - popupWidth
-            popupWindow.showAsDropDown(binding.filterButton, xOffset, 0)
-        }
-        // Setup mode spinner
-        setupModeSpinner()
     }
-
     private fun setupModeSpinner() {
         // initialize spinner with modes for nearby and favourites
         val spinner = binding.homeModeSpinner
@@ -246,6 +170,17 @@ class HomeFragment : Fragment() {
 
             override fun onNothingSelected(parent: AdapterView<*>) {
                 // no-op
+            }
+        }
+    }
+
+    private fun setInitialLocation() {
+        val latitude1 = arguments?.getDouble("latitude") ?: 0.0
+        val longitude1 = arguments?.getDouble("longitude") ?: 0.0
+        if (latitude1 != 0.0) {
+            lastUserLocation = Location("manual").apply {
+                latitude = latitude1
+                longitude = longitude1
             }
         }
     }
@@ -295,6 +230,90 @@ class HomeFragment : Fragment() {
         // update adapter
         adapter.setItems(sorted) {
             onSuccess?.invoke(sorted)
+        }
+    }
+
+    private fun handleFilterButton() {
+        binding.filterButton.setOnClickListener {
+            // Show popup window with filter options
+            val inflater = LayoutInflater.from(requireContext())
+            val popupView = inflater.inflate(R.layout.filter_popup, null)
+            val minWidthPx = (180 * resources.displayMetrics.density).toInt()
+            val buttonWidth = binding.filterButton.width
+            val popupWidth = if (buttonWidth > minWidthPx) buttonWidth else minWidthPx
+            val popupWindow = android.widget.PopupWindow(
+                popupView,
+                popupWidth,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                true
+            )
+            popupWindow.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+            popupWindow.isOutsideTouchable = true
+
+            // Set initial checkbox states
+            handlePopUpCheckBoxes(popupView)
+
+            //  Distance slider logic
+            handlePopUpSlider(popupView)
+
+            //show popup coordinates here
+            val xOffset = binding.filterButton.width - popupWidth
+            popupWindow.showAsDropDown(binding.filterButton, xOffset, 0)
+        }
+    }
+
+    private fun handlePopUpSlider(popupView : View) {
+        val distanceSlider = popupView.findViewById<com.google.android.material.slider.Slider>(R.id.distance_slider)
+        val distanceValue = popupView.findViewById<android.widget.TextView>(R.id.distance_value)
+        // Set initial slider position
+        val initialIndex = distanceIntervals.indexOf(selectedDistanceKm)
+        distanceSlider.value = if (initialIndex >= 0) initialIndex.toFloat() else 0f
+        distanceValue.text = "${distanceIntervals[distanceSlider.value.toInt()]} km"
+        distanceSlider.addOnChangeListener { _, value, _ ->
+            selectedDistanceKm = distanceIntervals[value.toInt()]
+            distanceValue.text = "${selectedDistanceKm} km"
+            applyAllFilters()
+        }
+    }
+
+    private fun handlePopUpCheckBoxes(popupView: View) {
+        val tennisCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(
+            R.id.checkbox_tennis)
+        val basketballCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.checkbox_basketball)
+        val availableCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.checkbox_available)
+        val recentContainer : LinearLayout = popupView.findViewById(R.id.sort_recent_container)
+        val nearbyContainer : LinearLayout = popupView.findViewById(R.id.distance_container)
+        if (currentMode == Mode.NEARBY) {
+            recentContainer.visibility = View.GONE
+            nearbyContainer.visibility = View.VISIBLE
+        } else if (currentMode == Mode.FAVOURITES) {
+            recentContainer.visibility = View.VISIBLE
+            nearbyContainer.visibility = View.GONE
+        }
+        tennisCheck.isChecked = showTennis
+        basketballCheck.isChecked = showBasketball
+        availableCheck.isChecked = filterAvailableOnly
+
+        // Checkbox listeners
+        tennisCheck.setOnCheckedChangeListener { _, isChecked ->
+            showTennis = isChecked
+            applyAllFilters()
+        }
+        basketballCheck.setOnCheckedChangeListener { _, isChecked ->
+            showBasketball = isChecked
+            applyAllFilters()
+        }
+        availableCheck.setOnCheckedChangeListener { _, isChecked ->
+            filterAvailableOnly = isChecked
+            applyAllFilters()
+        }
+
+        // Recent sorting checkbox logic
+        val recentCheck = popupView.findViewById<MaterialCheckBox>(R.id.checkbox_recent)
+        recentCheck.isChecked = showRecent
+        recentCheck.setOnCheckedChangeListener { _, isChecked ->
+            showRecent = isChecked
+            applyAllFilters()
         }
     }
 

@@ -106,175 +106,28 @@ class CourtDetailFragment : Fragment(), OnMapReadyCallback {
         courtsRecyclerView.adapter = adapter
         favouriteImgView = view.findViewById(R.id.heartImage)
 
-        UserRepository.instance.currentUser.observe(viewLifecycleOwner) {user ->
-            Log.d("details", user.toString())
-            if (user == null) {
-                favouriteImgView.setImageResource(R.drawable.heart_outline)
-                return@observe
-            }
-            currUser = user
-            if (user.favourites.contains(documentId)) {
-                favourited = true
-                favouriteImgView.setImageResource(R.drawable.heart_filled)
-            } else {
-                favourited= false
-                 favouriteImgView.setImageResource(R.drawable.heart_outline)
-            }
-        }
+        //to show heart if favourited
+        showHeartIfFavourited()
 
-        //Weather UI (NEW)
-        val weatherValue = view.findViewById<android.widget.TextView>(R.id.weather_value)
-        val weatherProgress = view.findViewById<android.widget.ProgressBar>(R.id.weather_progress)
-
-        // Used to avoid geocoding + refetching repeatedly for the same court/address
-
+        //handle weather ui whenever state changes
         viewModel.weather.observe(viewLifecycleOwner) { state ->
-            when (state) {
-                is WeatherUiState.Idle -> {
-                    weatherProgress.visibility = View.GONE
-                    weatherValue.text = "—"
-                }
-                is WeatherUiState.Loading -> {
-                    weatherProgress.visibility = View.VISIBLE
-                    weatherValue.text = "Loading…"
-                }
-                is WeatherUiState.Ready -> {
-                    weatherProgress.visibility = View.GONE
-                    val w = state.weather
-                    val emoji = weatherCodeToEmoji(w.weatherCode)
-                    val temp = String.format(Locale.getDefault(), "%.0f", w.tempC)
-                    val wind = String.format(Locale.getDefault(), "%.0f", w.windKmh)
-
-                    weatherValue.text = "$emoji $temp°C · ${w.description} · Wind $wind km/h"
-
-                }
-                is WeatherUiState.Error -> {
-                    weatherProgress.visibility = View.GONE
-                    weatherValue.text = state.message
-                }
-            }
+            handleWeather(view, state)
         }
 
-
+        //ui stuff for court set here
         viewModel.courtLiveData.observe(viewLifecycleOwner) { court ->
             Log.d("map", "court loaded")
             this@CourtDetailFragment.court = court
-            if (court != null) {
-                setLastVerified(court)
-                val geoPoint : GeoPoint? = court.base.geoPoint
-                if (map != null && geoPoint != null) {
-                    val latLng = LatLng(geoPoint.latitude, geoPoint.longitude)
-                    map!!.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
-                    map!!.addMarker(MarkerOptions().position(latLng))
-                } else {
-                    if (geoPoint != null) {
-                        pendingLatLng = LatLng(geoPoint.latitude, geoPoint.longitude)
-                    }
-                }
-                Log.d("debug", court.toString())
-                if (court.base.courtsAvailable == 0) {
-                    val activity = requireActivity()
-                    if (activity is MainActivity) {
-                        activity.showToolBarButton("Notify When\navailable") {
-                            startNotificationService(court)
-                        }
-                    }
-                } else {
-                    val activity = requireActivity()
-                    if (activity is MainActivity) {
-                        activity.hideToolBarButton()
-                    }
-                }
-                // Title: "{name} ({number of courts})"
-                val titleView = view.findViewById<android.widget.TextView>(R.id.court_title)
-                var titleString = ""
-                // Set iconType based on court type
-                val iconType = when (court) {
-                    is TennisCourt -> R.drawable.ic_tennis_ball
-                    is BasketballCourt -> R.drawable.ic_basketball_ball
-                    else -> R.drawable.ic_launcher_foreground
-                }
-                val iconView = view.findViewById<ImageView>(R.id.courtdetail_type_icon)
-                iconView.setImageResource(iconType)
-
-                titleString += "${court.base.name} (${court.base.totalCourts})"
-                titleView.text = titleString
-                // Address
-                val addressView = view.findViewById<android.widget.TextView>(R.id.court_address)
-                addressView.text = court.base.address
-
-                // Build amenities string
-                val amenitiesList = mutableListOf<String>()
-                amenitiesList.add(formatAmenity("Accessibility", court.base.accessibility))
-                amenitiesList.add(formatAmenity("Washroom", court.base.washroom))
-                amenitiesList.add(formatAmenity("Indoor", court.base.indoor))
-                amenitiesList.add(formatAmenity("Lights", court.base.lights))
-
-                when (court) {
-                    is TennisCourt -> amenitiesList.add(formatAmenity("Practice Wall", court.practiceWall))
-                    is BasketballCourt -> amenitiesList.add(formatAmenity("Nets", court.nets))
-                }
-                val amenitiesView = view.findViewById<android.widget.TextView>(R.id.amenities_list)
-                amenitiesView.text = if (amenitiesList.isNotEmpty()) amenitiesList.joinToString("• ") else "None"
-
-                // Update courts list RecyclerView (uncomment and implement CourtStatusAdapter)
-                adapter.setItems(court.base.courtStatus)
-
-                // Weather fetch trigger
-                val addr = court.base.address
-                if (addr.isNotBlank() && addr != lastWeatherAddress) {
-                    lastWeatherAddress = addr
-                    viewModel.setWeatherLoading()
-
-                    lifecycleScope.launch(Dispatchers.IO) {
-                        val latLon: Pair<Double, Double>? = try {
-                            val geocoder = android.location.Geocoder(requireContext(), java.util.Locale.getDefault())
-                            val results = geocoder.getFromLocationName(addr, 1)
-                            val loc = results?.firstOrNull()
-                            if (loc != null) Pair(loc.latitude, loc.longitude) else null
-                        } catch (_: Exception) {
-                            null
-                        }
-
-                        withContext(Dispatchers.Main) {
-                            if (latLon == null) {
-                                viewModel.setWeatherError("Weather unavailable")
-                            } else {
-                                viewModel.loadWeather(latLon.first, latLon.second)
-                            }
-                        }
-                    }
-                }
+            if (court == null) {
+                return@observe
             }
+            handleCourt(view, court)
         }
 
-        favouriteImgView.setOnClickListener {
-            Log.d("details", "image clicked")
-            val currCourt = court
-            if (currCourt == null) {
-                return@setOnClickListener
-            }
-            val userInstance = currUser
-            if (userInstance == null) {
-                return@setOnClickListener
-            }
-            if (favourited) {
-                userInstance.favourites.remove(currCourt.base.id)
-                UserRepository.instance.createOrUpdateUser(userInstance) {
-                    if (it) {
-                        Toast.makeText(requireContext(), "Unfavourited Court", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            } else {
-                userInstance.favourites.add(0, currCourt.base.id)
-                UserRepository.instance.createOrUpdateUser(userInstance) {
-                    if (it) {
-                        Toast.makeText(requireContext(), "Court Favourited", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-        }
+        //for favourite image toggling
+        setFavouriteOnClick()
 
+        //button handling below
         val editCourtButton : Button = view.findViewById(R.id.edit_court_button)
         editCourtButton.setOnClickListener {
             val args = Bundle().apply {
@@ -387,6 +240,191 @@ class CourtDetailFragment : Fragment(), OnMapReadyCallback {
             true -> "$label: ✓ "
             false -> "$label: ✗ "
             null -> "$label: ？"
+        }
+    }
+
+
+    private fun handleWeather(view : View, state: WeatherUiState) {
+        val weatherValue = view.findViewById<android.widget.TextView>(R.id.weather_value)
+        val weatherProgress = view.findViewById<android.widget.ProgressBar>(R.id.weather_progress)
+        when (state) {
+            is WeatherUiState.Idle -> {
+                weatherProgress.visibility = View.GONE
+                weatherValue.text = "—"
+            }
+            is WeatherUiState.Loading -> {
+                weatherProgress.visibility = View.VISIBLE
+                weatherValue.text = "Loading…"
+            }
+            is WeatherUiState.Ready -> {
+                weatherProgress.visibility = View.GONE
+                val w = state.weather
+                val emoji = weatherCodeToEmoji(w.weatherCode)
+                val temp = String.format(Locale.getDefault(), "%.0f", w.tempC)
+                val wind = String.format(Locale.getDefault(), "%.0f", w.windKmh)
+
+                weatherValue.text = "$emoji $temp°C · ${w.description} · Wind $wind km/h"
+
+            }
+            is WeatherUiState.Error -> {
+                weatherProgress.visibility = View.GONE
+                weatherValue.text = state.message
+            }
+        }
+    }
+
+
+    private fun handleCourt(view : View, court : Court) {
+        setLastVerified(court)
+        val geoPoint : GeoPoint? = court.base.geoPoint
+        //show location on map if it exists, else store location for map to use
+        courtReadyForMap(geoPoint)
+
+        //show notification button if court is unavailable
+        showNotificationButton(court)
+
+        //ui stuff
+        setCourtUi(view, court)
+
+        //send a weather update to viewmodel
+       sendWeatherUpdate(court)
+    }
+
+    private fun sendWeatherUpdate(court : Court) {
+        val addr = court.base.address
+        if (addr.isNotBlank() && addr != lastWeatherAddress) {
+            lastWeatherAddress = addr
+            viewModel.setWeatherLoading()
+
+            lifecycleScope.launch(Dispatchers.IO) {
+                val latLon: Pair<Double, Double>? = try {
+                    val geocoder = android.location.Geocoder(requireContext(), java.util.Locale.getDefault())
+                    val results = geocoder.getFromLocationName(addr, 1)
+                    val loc = results?.firstOrNull()
+                    if (loc != null) Pair(loc.latitude, loc.longitude) else null
+                } catch (_: Exception) {
+                    null
+                }
+
+                withContext(Dispatchers.Main) {
+                    if (latLon == null) {
+                        viewModel.setWeatherError("Weather unavailable")
+                    } else {
+                        viewModel.loadWeather(latLon.first, latLon.second)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun setCourtUi(view : View, court : Court ){
+        val titleView = view.findViewById<android.widget.TextView>(R.id.court_title)
+        var titleString = ""
+        // Set iconType based on court type
+        val iconType = when (court) {
+            is TennisCourt -> R.drawable.ic_tennis_ball
+            is BasketballCourt -> R.drawable.ic_basketball_ball
+            else -> R.drawable.ic_launcher_foreground
+        }
+        val iconView = view.findViewById<ImageView>(R.id.courtdetail_type_icon)
+        iconView.setImageResource(iconType)
+
+        titleString += "${court.base.name} (${court.base.totalCourts})"
+        titleView.text = titleString
+        // Address
+        val addressView = view.findViewById<android.widget.TextView>(R.id.court_address)
+        addressView.text = court.base.address
+
+        // Build amenities string
+        val amenitiesList = mutableListOf<String>()
+        amenitiesList.add(formatAmenity("Accessibility", court.base.accessibility))
+        amenitiesList.add(formatAmenity("Washroom", court.base.washroom))
+        amenitiesList.add(formatAmenity("Indoor", court.base.indoor))
+        amenitiesList.add(formatAmenity("Lights", court.base.lights))
+
+        when (court) {
+            is TennisCourt -> amenitiesList.add(formatAmenity("Practice Wall", court.practiceWall))
+            is BasketballCourt -> amenitiesList.add(formatAmenity("Nets", court.nets))
+        }
+        val amenitiesView = view.findViewById<android.widget.TextView>(R.id.amenities_list)
+        amenitiesView.text = if (amenitiesList.isNotEmpty()) amenitiesList.joinToString("• ") else "None"
+
+        // Update courts list RecyclerView (uncomment and implement CourtStatusAdapter)
+        adapter.setItems(court.base.courtStatus)
+    }
+
+    private fun courtReadyForMap(geoPoint: GeoPoint?) {
+        if (map != null && geoPoint != null) {
+            val latLng = LatLng(geoPoint.latitude, geoPoint.longitude)
+            map!!.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
+            map!!.addMarker(MarkerOptions().position(latLng))
+        } else {
+            if (geoPoint != null) {
+                pendingLatLng = LatLng(geoPoint.latitude, geoPoint.longitude)
+            }
+        }
+    }
+
+    private fun showNotificationButton(court : Court) {
+        if (court.base.courtsAvailable == 0) {
+            val activity = requireActivity()
+            if (activity is MainActivity) {
+                activity.showToolBarButton("Notify When\navailable") {
+                    startNotificationService(court)
+                }
+            }
+        } else {
+            val activity = requireActivity()
+            if (activity is MainActivity) {
+                activity.hideToolBarButton()
+            }
+        }
+    }
+
+    private fun setFavouriteOnClick() {
+        favouriteImgView.setOnClickListener {
+            Log.d("details", "image clicked")
+            val currCourt = court
+            if (currCourt == null) {
+                return@setOnClickListener
+            }
+            val userInstance = currUser
+            if (userInstance == null) {
+                return@setOnClickListener
+            }
+            if (favourited) {
+                userInstance.favourites.remove(currCourt.base.id)
+                UserRepository.instance.createOrUpdateUser(userInstance) {
+                    if (it) {
+                        Toast.makeText(requireContext(), "Unfavourited Court", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } else {
+                userInstance.favourites.add(0, currCourt.base.id)
+                UserRepository.instance.createOrUpdateUser(userInstance) {
+                    if (it) {
+                        Toast.makeText(requireContext(), "Court Favourited", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun showHeartIfFavourited() {
+        UserRepository.instance.currentUser.observe(viewLifecycleOwner) {user ->
+            Log.d("details", user.toString())
+            if (user == null) {
+                favouriteImgView.setImageResource(R.drawable.heart_outline)
+                return@observe
+            }
+            currUser = user
+            if (user.favourites.contains(documentId)) {
+                favourited = true
+                favouriteImgView.setImageResource(R.drawable.heart_filled)
+            } else {
+                favourited= false
+                favouriteImgView.setImageResource(R.drawable.heart_outline)
+            }
         }
     }
 }
