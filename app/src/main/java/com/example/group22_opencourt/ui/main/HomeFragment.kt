@@ -271,10 +271,10 @@ class HomeFragment : Fragment() {
                 binding.locationInfoText.text = "No Courts Nearby"
             }
         }
-        binding.recyclerView.post {
-            adapter.setItems(sorted) {
-                onSuccess?.invoke(sorted)
-            }
+
+        adapter.setItems(sorted) {
+            onSuccess?.invoke(sorted)
+
         }
     }
 
@@ -288,16 +288,18 @@ class HomeFragment : Fragment() {
         if (shouldUpdate) {
             lastUserLocation = location
             Log.d("debug", "filter called from update userLocation")
-            applyAllFilters() { sorted ->
-                //the apply filters only updates position and reuses viewHolders if on screen
-                //apply this to update the any detail on the texts in the viewholders
-//                Log.d("court", "happens cause of child loop")
-                for (i in 0 until minOf(binding.recyclerView.childCount, sorted.size)) {
-                    val court = sorted[i]
-                    val child = binding.recyclerView.getChildAt(i)
-                    val holder = binding.recyclerView.getChildViewHolder(child) as ViewHolder
+            applyAllFilters { sorted ->
+                val childCount = binding.recyclerView.childCount
+                val max = minOf(childCount, sorted.size)
+
+                for (i in 0 until max) {
+                    val child = binding.recyclerView.getChildAt(i) ?: continue
+                    val holder = binding.recyclerView.getChildViewHolder(child) as? ViewHolder ?: continue
+                    val court = sorted.getOrNull(i) ?: continue
+
                     val geoPoint = court.base.geoPoint
                     val location = lastUserLocation
+
                     if (geoPoint != null && location != null) {
                         val results = FloatArray(1)
                         Location.distanceBetween(
@@ -306,9 +308,9 @@ class HomeFragment : Fragment() {
                             results
                         )
                         val distanceKm = results[0] / 1000f
-                        holder.distanceView.text = String.format(Locale.getDefault(), "%.1f km", distanceKm)
+                        holder.distanceView.text =
+                            String.format(Locale.getDefault(), "%.1f km", distanceKm)
                     } else {
-                        Log.d("debug", court.toString())
                         holder.distanceView.text = "-.- km"
                     }
                 }
