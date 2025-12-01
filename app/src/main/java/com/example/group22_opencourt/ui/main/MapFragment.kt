@@ -45,6 +45,7 @@ import com.example.group22_opencourt.model.Court
 import com.example.group22_opencourt.model.TennisCourt
 import com.example.group22_opencourt.model.User
 import com.example.group22_opencourt.model.UserRepository
+import kotlin.collections.remove
 import kotlin.text.clear
 import kotlin.text.compareTo
 import kotlin.times
@@ -354,6 +355,8 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
 
         map.setPadding(0,100,0,0)
 
+        handleHoldToPin()
+
         // detect if user moved the map
         map.setOnCameraMoveStartedListener { reason ->
             if (reason == GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE) {
@@ -468,5 +471,32 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
             putString("document_id", documentId)
         }
         findNavController().navigate(R.id.action_mapFragment_to_courtDetailFragment, args)
+    }
+
+    private fun handleHoldToPin() {
+        map.setOnMapLongClickListener { latLng ->
+            // Update reference location
+            currentReferenceLocation = Location("").apply {
+                latitude = latLng.latitude
+                longitude = latLng.longitude
+            }
+
+            // Remove old search marker if any
+            searchMarker?.remove()
+
+            // Add a marker for the pinned location
+            searchMarker = map.addMarker(
+                MarkerOptions()
+                    .position(latLng)
+                    .title("Pinned location")
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+            )
+
+            // Optionally move/zoom camera
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
+
+            // Refresh courts based on new reference
+            observeCourts()
+        }
     }
 }
