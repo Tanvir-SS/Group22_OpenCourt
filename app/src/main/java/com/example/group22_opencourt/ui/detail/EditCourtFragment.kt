@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import org.w3c.dom.Text
 
 class EditCourtFragment : Fragment() {
+    // ViewModel and document ID
     private lateinit var viewModel: CourtDetailViewModel
     private var documentId: String = ""
     // initialize all checkboxes and layouts
@@ -59,26 +60,31 @@ class EditCourtFragment : Fragment() {
             Log.d("debug", "message")
             if (court != null) {
                 Log.d("debug", court.toString())
-                // Title: "{name} ({number of courts})"
+
+                // set title
                 val titleView = view.findViewById<android.widget.TextView>(R.id.edit_court_title)
                 var titleString = ""
+
                 // Set iconType based on court type
                 val iconType = when (court) {
                     is TennisCourt -> R.drawable.ic_tennis_ball
                     is BasketballCourt -> R.drawable.ic_basketball_ball
                     else -> R.drawable.ic_launcher_foreground
                 }
+
+                // setup the title with icon
                 val iconView = view.findViewById<ImageView>(R.id.courtedit_type_icon)
                 iconView.setImageResource(iconType)
                 titleString += "${court.base.name} (${court.base.totalCourts})"
                 titleView.text = titleString
+
                 // Address
                 val addressView = view.findViewById<android.widget.TextView>(R.id.edit_court_address)
                 addressView.text = court.base.address
-                // Last Verified (if you want to show it)
+
+                // Last Verified
                 lastVerifiedView = view.findViewById<android.widget.TextView>(R.id.edit_last_verified)
                 setLastVerified(court)
-                // lastVerifiedView.text = "Last Verified: ${court.base.lastVerified}" // Uncomment if available
             }
         }
 
@@ -95,6 +101,7 @@ class EditCourtFragment : Fragment() {
         accessibilityLayout = view.findViewById(R.id.edit_accessibility_layout)
         layoutTennisAmenities = view.findViewById(R.id.edit_layoutTennisAmenities)
         layoutBasketballAmenities = view.findViewById(R.id.edit_layoutBasketballAmenities)
+
         // Apply Changes button
         val applyChangesButton = view.findViewById<Button>(R.id.edit_buttonApply)
 
@@ -103,14 +110,17 @@ class EditCourtFragment : Fragment() {
             if (court != null) {
                 populateAmenities(court)
                 applyChangesButton.setOnClickListener {
+                    // save changes when button is clicked
                     saveChanges(court)
                 }
             }
         }
 
+        // Setup layout click listeners to toggle checkboxes
         setupLayoutClickListeners()
     }
 
+    // Set the last verified text based on last update time
     private fun setLastVerified(court: Court) {
         val diffMillis = System.currentTimeMillis() - court.base.lastUpdate
         if (diffMillis < 0) {
@@ -146,6 +156,7 @@ class EditCourtFragment : Fragment() {
     }
 
     private fun populateAmenities(court: Court) {
+
         // Set checkboxes based on court data
         checkboxLights.isChecked = court.base.lights == true
         checkboxIndoor.isChecked = court.base.indoor == true
@@ -168,6 +179,7 @@ class EditCourtFragment : Fragment() {
     }
 
     private fun saveChanges(court: Court) {
+
         // Update court object with checkbox values
         court.base.lights = checkboxLights.isChecked
         court.base.indoor = checkboxIndoor.isChecked
@@ -181,6 +193,7 @@ class EditCourtFragment : Fragment() {
             court.nets = checkboxNets.isChecked
         }
 
+        // Update last update time
         court.base.lastUpdate = System.currentTimeMillis()
 
         // Save updated court to repository
@@ -195,6 +208,7 @@ class EditCourtFragment : Fragment() {
 
     private fun setupLayoutClickListeners() {
         // Toggle checkboxes when layouts are clicked not just checkboxes
+
         lightsLayout.setOnClickListener {
             checkboxLights.isChecked = !checkboxLights.isChecked
         }

@@ -40,7 +40,7 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 
 class HomeFragment : Fragment() {
-
+    // View binding
     private lateinit var binding: FragmentHomeBinding
     private lateinit var adapter: HomeRecyclerViewAdapter
     private val viewModel: HomeViewModel by activityViewModels()
@@ -49,35 +49,41 @@ class HomeFragment : Fragment() {
     private var showTennis = true
     private var showBasketball = true
 
+    // New sorting state
     private var showRecent = false
     private var lastUserLocation: Location? = null
     private val locationUpdateThresholdMeters = 50f
     private var selectedDistanceKm = 5 // Default distance
     private val distanceIntervals = listOf(1, 2, 5, 10, 25)
 
+    // All courts list
     private var courts = emptyList<Court>()
 
     // New filter state variable
     private var filterAvailableOnly = false // Track available courts only filter
 
+    // Current mode
     private enum class Mode { NEARBY, FAVOURITES }
     private var currentMode: Mode = Mode.NEARBY
 
+    // Current user data
     var currentUser : User? = null
 
+    // Permission monitoring job
     private var permissionJob : Job? = null
-
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        // Inflate the layout for this fragment using view binding
         binding = FragmentHomeBinding.inflate(inflater, container, false)
         Log.d("debug", "onCreateViewCalled")
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        // divide items in recycler view
         val dividerItemDecoration = DividerItemDecoration(
             binding.recyclerView.context,
             DividerItemDecoration.VERTICAL
@@ -91,6 +97,7 @@ class HomeFragment : Fragment() {
                 longitude = longitude1
             }
         }
+        // Setup RecyclerView and its adapter
         adapter = HomeRecyclerViewAdapter(
             courtList = emptyList(),
             currentUser = currentUser,
@@ -101,6 +108,7 @@ class HomeFragment : Fragment() {
         binding.recyclerView.adapter = adapter
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
+        // Observe current user data and update adapter
         UserRepository.instance.currentUser.observe(viewLifecycleOwner) {
             currentUser = it
             adapter.updateCurrentUser(it)
@@ -108,7 +116,6 @@ class HomeFragment : Fragment() {
                 Log.d("HomeFragment", "Adapter updated with new user favorites")
             }
         }
-
 
         // Observe courts from ViewModel and update adapter
         viewModel.courts.observe(viewLifecycleOwner) { courts ->
@@ -130,6 +137,7 @@ class HomeFragment : Fragment() {
 
         // Filter button logic
         binding.filterButton.setOnClickListener {
+            // Show popup window with filter options
             val inflater = LayoutInflater.from(requireContext())
             val popupView = inflater.inflate(R.layout.filter_popup, null)
             val minWidthPx = (180 * resources.displayMetrics.density).toInt()
@@ -143,6 +151,7 @@ class HomeFragment : Fragment() {
             )
             popupWindow.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
             popupWindow.isOutsideTouchable = true
+
             // Set initial checkbox states
             val tennisCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(
                 R.id.checkbox_tennis)
@@ -160,6 +169,7 @@ class HomeFragment : Fragment() {
             tennisCheck.isChecked = showTennis
             basketballCheck.isChecked = showBasketball
             availableCheck.isChecked = filterAvailableOnly
+
             // Checkbox listeners
             tennisCheck.setOnCheckedChangeListener { _, isChecked ->
                 showTennis = isChecked
@@ -174,6 +184,7 @@ class HomeFragment : Fragment() {
                 applyAllFilters()
             }
 
+            // Recent sorting checkbox logic
             val recentCheck = popupView.findViewById<MaterialCheckBox>(R.id.checkbox_recent)
             recentCheck.isChecked = showRecent
             recentCheck.setOnCheckedChangeListener { _, isChecked ->
@@ -196,11 +207,12 @@ class HomeFragment : Fragment() {
             val xOffset = binding.filterButton.width - popupWidth
             popupWindow.showAsDropDown(binding.filterButton, xOffset, 0)
         }
-
+        // Setup mode spinner
         setupModeSpinner()
     }
 
     private fun setupModeSpinner() {
+        // initialize spinner with modes for nearby and favourites
         val spinner = binding.homeModeSpinner
         val adapter = ArrayAdapter.createFromResource(
             requireContext(),
@@ -211,6 +223,7 @@ class HomeFragment : Fragment() {
         }
         spinner.adapter = adapter
 
+        // Spinner selection listener
         spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
                 parent: AdapterView<*>,
@@ -218,6 +231,7 @@ class HomeFragment : Fragment() {
                 position: Int,
                 id: Long
             ) {
+                // Update current mode based on selection
                 when (position) {
                     0 -> {
                         currentMode = Mode.NEARBY
@@ -237,18 +251,23 @@ class HomeFragment : Fragment() {
     }
 
     private fun applyAllFilters(onSuccess: ((List<Court>) -> Unit)? = null) {
+        // apply all filters and update adapter
         permissionJob?.cancel()
         binding.locationInfoText.visibility = View.GONE
         val location = lastUserLocation
         if (location == null) {
+            // filter based on mode
             val user = currentUser
             if (currentMode == Mode.FAVOURITES && user != null) {
+                // filter favourites
                 val filter = courts.filter { court ->
                     user.favourites.contains(court.base.id)
                 }
+                // sort favourites
                 val sorted = filter.sortedBy { court ->
                     user.favourites.indexOf(court.base.id)
                 }
+                // update adapter
                 adapter.setItems(sorted)
             } else if (currentMode ==  Mode.NEARBY) {
                 binding.locationInfoText.visibility = View.VISIBLE
@@ -257,11 +276,12 @@ class HomeFragment : Fragment() {
             }
             return
         }
+        // proceed with filtering and sorting using location
         adapter.location = location
         val filtered = filterCourts(location)
         var sorted = filtered
 
-        //sort by shortest distance
+        // sort by shortest distance
         sorted = sortList(filtered, location)
         if (sorted.isEmpty()) {
             binding.locationInfoText.visibility = View.VISIBLE
@@ -272,31 +292,34 @@ class HomeFragment : Fragment() {
             }
         }
 
+        // update adapter
         adapter.setItems(sorted) {
             onSuccess?.invoke(sorted)
-
         }
     }
 
     fun updateUserLocation(location: Location) {
+        // called from MainActivity when location is updated
         Log.d("location", "recieved in home fragment")
+        // set location only if significant change
         val lastLocation = lastUserLocation
         var shouldUpdate = lastLocation == null || location.distanceTo(lastLocation) > locationUpdateThresholdMeters
         if (!this::binding.isInitialized) {
             return
         }
         if (shouldUpdate) {
+            // update location
             lastUserLocation = location
             Log.d("debug", "filter called from update userLocation")
             applyAllFilters { sorted ->
                 val childCount = binding.recyclerView.childCount
                 val max = minOf(childCount, sorted.size)
-
+                // update visible distance labels
                 for (i in 0 until max) {
                     val child = binding.recyclerView.getChildAt(i) ?: continue
                     val holder = binding.recyclerView.getChildViewHolder(child) as? ViewHolder ?: continue
                     val court = sorted.getOrNull(i) ?: continue
-
+                    // calculate distance
                     val geoPoint = court.base.geoPoint
                     val location = lastUserLocation
 
@@ -307,6 +330,7 @@ class HomeFragment : Fragment() {
                             geoPoint.latitude, geoPoint.longitude,
                             results
                         )
+                        // update distance label
                         val distanceKm = results[0] / 1000f
                         holder.distanceView.text =
                             String.format(Locale.getDefault(), "%.1f km", distanceKm)
@@ -319,13 +343,16 @@ class HomeFragment : Fragment() {
     }
 
     private fun filterCourts(location : Location) : List<Court> {
+        // filter courts based on current filter settings
         return courts.filter { court ->
             var typeMatch = false
             when (court) {
+                // check type filter
                 is BasketballCourt -> typeMatch = showBasketball
                 is TennisCourt -> typeMatch = showTennis
             }
             var distanceMatch = false
+            // check distance or favourites filter
             if (currentMode == Mode.NEARBY) {
                 val geoPoint = court.base.geoPoint
                 distanceMatch = if (geoPoint != null) {
@@ -340,6 +367,7 @@ class HomeFragment : Fragment() {
                    true
                 }
             } else if (currentMode == Mode.FAVOURITES){
+                // check if in favourites
                 val user = currentUser
                 if (user == null) {
                     distanceMatch = false
@@ -356,11 +384,14 @@ class HomeFragment : Fragment() {
     }
 
     private fun sortList(list : List<Court>, location : Location) : List<Court> {
+        // sort list based on current mode and settings
         val user = currentUser
         if (currentMode == Mode.NEARBY) {
+            // sort by distance
             return sortByLocation(list, location)
         } else if (currentMode == Mode.FAVOURITES && user != null) {
             if (showRecent) {
+                // sort by favourites order
                 return list.sortedBy { court ->
                     user.favourites.indexOf(court.base.id)
                 }
@@ -372,24 +403,28 @@ class HomeFragment : Fragment() {
     }
 
     private fun sortByLocation(list : List<Court>, location : Location ) : List<Court> {
+        // sort courts by distance from location
         return list.sortedBy { court ->
             val geoPoint = court.base.geoPoint
             if (geoPoint != null) {
                 val results = FloatArray(1)
+                // calculate distance from location to court
                 Location.distanceBetween(
                     location.latitude, location.longitude,
                     geoPoint.latitude, geoPoint.longitude,
                     results
                 )
-                //return distance
+                // return distance in array
                 results[0]
             } else {
-                //return max distance because no location data
+                // return max distance because no location data
                 Float.MAX_VALUE
             }
         }
     }
+
     private fun onCourtSelected(documentId: String) {
+        // navigate to court detail fragment with document ID
         val args = Bundle().apply {
             putString("document_id", documentId)
         }
@@ -397,6 +432,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun monitorLocationPermissionStatus() {
+        // monitor location permission status and update UI
         permissionJob = lifecycleScope.launch {
             while (isActive) {
                  if (!isLocationPermissionGranted(requireContext())) {
@@ -410,7 +446,9 @@ class HomeFragment : Fragment() {
         }
 
     }
+
     fun isLocationPermissionGranted(context: Context): Boolean {
+        // check if either fine or coarse location permission is granted
         val fine = ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.ACCESS_FINE_LOCATION

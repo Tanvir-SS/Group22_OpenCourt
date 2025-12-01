@@ -28,17 +28,19 @@ import kotlin.coroutines.suspendCoroutine
 
 class ImagesRepository {
 
+    // initialize Places client and Firebase Storage
     private lateinit var placesClient: PlacesClient
-
     private val storage = Firebase.storage
     private val rootRef = storage.reference
+
+    // create singleton instance
     companion object {
         val instance: ImagesRepository by lazy { ImagesRepository() }
         val URI_NON_EXIST = "NO_PHOTO"
-
         val FAIl = "fail"
-
     }
+
+    // load court photo into ImageView using Glide
     fun loadCourtPhoto(context: Context, photoUri: String?, imageView: ImageView) {
         if (photoUri.isNullOrEmpty() || photoUri == URI_NON_EXIST) {
             return
@@ -49,6 +51,7 @@ class ImagesRepository {
     }
 
     suspend fun getCourtDetailsFromAddress(context : Context, address: String) : Triple<GeoPoint?, String, String>? {
+        // Initialize Places if not already initialized
         if (!Places.isInitialized()) {
             Places.initializeWithNewPlacesApiEnabled(context.getApplicationContext(), BuildConfig.MAPS_API_KEY)
             placesClient = Places.createClient(context.applicationContext)
@@ -56,19 +59,23 @@ class ImagesRepository {
         if (!(::placesClient.isInitialized)){
             placesClient = Places.createClient(context.applicationContext)
         }
+        // Search for place ID
         val placeId : String? = searchPlace(address)
         if (placeId == null) {
             return null
         }
+        // Fetch place details
         return fetchPlaceDetails(placeId)
     }
 
     suspend fun searchPlace(query: String) : String? {
+        // Use Places SDK to search for place ID
         return suspendCoroutine { cont ->
             val request = FindAutocompletePredictionsRequest.builder()
                 .setQuery(query)
                 .build()
 
+            // Perform the autocomplete request
             placesClient.findAutocompletePredictions(request)
                 .addOnSuccessListener { response ->
                     if (response.autocompletePredictions.isEmpty()) {
@@ -90,15 +97,16 @@ class ImagesRepository {
     }
 
     private suspend fun fetchPlaceDetails(placeId: String) : Triple<GeoPoint?, String, String>? {
+        // Use Places SDK to fetch place details
         return suspendCoroutine { cont ->
             val fields = listOf(
                 Place.Field.ID,
                 Place.Field.ADDRESS,
                 Place.Field.LAT_LNG,
             )
-
+            // Create a request object
             val request = FetchPlaceRequest.newInstance(placeId, fields)
-
+            // Fetch place details
             placesClient.fetchPlace(request)
                 .addOnSuccessListener { response ->
                     val place = response.place
@@ -120,6 +128,7 @@ class ImagesRepository {
     }
 
     suspend fun ensurePhotoForPlace(context : Context, court: Court) {
+        // Initialize Places if not already initialized
         if (!Places.isInitialized()) {
             Places.initializeWithNewPlacesApiEnabled(context.getApplicationContext(), BuildConfig.MAPS_API_KEY)
             placesClient = Places.createClient(context.applicationContext)
@@ -145,7 +154,7 @@ class ImagesRepository {
     private suspend fun fetchPlacePhotoUri(context: Context, placeId: String): Uri? =
         suspendCoroutine { cont ->
 
-            // Step 1: Fetch Place with PHOTO_METADATAS
+            // fetch place to get photo metadata
             val placeRequest = FetchPlaceRequest.builder(
                 placeId,
                 listOf(Place.Field.PHOTO_METADATAS)
@@ -159,13 +168,13 @@ class ImagesRepository {
                         return@addOnSuccessListener
                     }
 
-                    // Step 2: Build FetchPhotoRequest
+                    // build photo request with max dimensions
                     val photoRequest = FetchResolvedPhotoUriRequest.builder(metadata)
                         .setMaxWidth(400)
                         .setMaxHeight(400)
                         .build()
 
-// Step 3: Fetch resolved URI
+                    // fetch resolved photo URI
                     placesClient.fetchResolvedPhotoUri(photoRequest)
                         .addOnSuccessListener {response: FetchResolvedPhotoUriResponse ->
                             val uri: Uri? = response.uri   // <-- extract the URI
@@ -182,6 +191,7 @@ class ImagesRepository {
 
     private suspend fun updatePhotoUriInFirestore(court: Court, uri: String): Boolean =
         suspendCoroutine { cont ->
+            // update court's photoUri in Firestore
             court.base.photoUri = uri
             CourtRepository.instance.updateCourt(court) {
                 if (it) {
@@ -195,10 +205,12 @@ class ImagesRepository {
 
     suspend fun uploadPhotoToFirebase(prefix: String, photoUri : Uri): String {
         try {
+            // upload photo to Firebase Storage and return download URL
             val photosRef = rootRef.child("user_photos/${prefix}${System.currentTimeMillis()}.jpg")
             photosRef.putFile(photoUri).await()
             return photosRef.downloadUrl.await().toString()
         } catch (e : Exception) {
+            // return fail if upload fails
             return FAIl
         }
     }

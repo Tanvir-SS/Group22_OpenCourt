@@ -26,13 +26,14 @@ class HomeRecyclerViewAdapter(
 ) : RecyclerView.Adapter<HomeRecyclerViewAdapter.ViewHolder>() {
 
     var location : Location? = null
-
+    // update current user data and notify adapter
     fun updateCurrentUser(user: User?) {
         currentUser = user
         notifyDataSetChanged()
     }
 
     class ViewHolder(val binding: HomeFragmentItemBinding) : RecyclerView.ViewHolder(binding.root) {
+        // initialize all views
         val nameView: TextView = binding.courtNameText
         val cityView: TextView = binding.courtCityText
         val verticalBar : View = binding.verticalColorBar
@@ -44,6 +45,7 @@ class HomeRecyclerViewAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        // Inflate the item layout using View Binding
         return ViewHolder(
             HomeFragmentItemBinding.inflate(
                 LayoutInflater.from(parent.context),
@@ -54,13 +56,17 @@ class HomeRecyclerViewAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        // get the court at the given position
         val court = courtList[position]
         holder.binding.root.setOnClickListener {
+            // invoke the click listener with the court
             onItemClick?.invoke(court)
         }
+
+        // set up court name, address, availability, distance, and image
         holder.nameView.text = court.base.name
-//        holder.cityView.text = court.base.city
         holder.addressView.text = court.base.address
+        // show green bar if available, red if not
         if (court.base.courtsAvailable != 0){
             holder.verticalBar.setBackgroundColor(ContextCompat.getColor(holder.itemView.context, R.color.oc_available))
         } else {
@@ -74,6 +80,7 @@ class HomeRecyclerViewAdapter(
         val geoPoint = court.base.geoPoint
         val userLocation = location // fix smart cast issue
         if (geoPoint != null && userLocation != null) {
+            // calculate distance between user and court
             val results = FloatArray(1)
             Location.distanceBetween(
                 userLocation.latitude, userLocation.longitude,
@@ -86,7 +93,9 @@ class HomeRecyclerViewAdapter(
             holder.distanceView.text = "-.- km"
         }
 
+        // load court image for basketball and tennis courts
         when (court) {
+            // use default image if no photoUri
             is BasketballCourt -> {
                 if (court.base.photoUri.isNotEmpty() && court.base.photoUri != ImagesRepository.URI_NON_EXIST){
                     ImagesRepository.instance.loadCourtPhoto(
@@ -96,6 +105,7 @@ class HomeRecyclerViewAdapter(
                 }
 
             }
+            // use default image if no photoUri
             is TennisCourt -> {
                 if (court.base.photoUri.isNotEmpty() && court.base.photoUri != ImagesRepository.URI_NON_EXIST) {
                     ImagesRepository.instance.loadCourtPhoto(
@@ -106,6 +116,8 @@ class HomeRecyclerViewAdapter(
                 }
             }
         }
+
+        // set up icon type from court type
         val iconRes = when (court.type) {
             "tennis" -> R.drawable.ic_tennis_ball
             "basketball" -> R.drawable.ic_basketball_ball
@@ -126,12 +138,14 @@ class HomeRecyclerViewAdapter(
     }
 
     override fun getItemCount(): Int {
+        // return the size of the court list
         return courtList.size
     }
 
     fun setItems(newList: List<Court>, onSuccess: (() -> Unit)? = null) {
         val oldList = courtList.toList() // Make a copy for thread safety
 
+        // Use DiffUtil to calculate the differences between old and new lists
         val diffCallback = object : DiffUtil.Callback() {
             override fun getOldListSize() = oldList.size
             override fun getNewListSize() = newList.size

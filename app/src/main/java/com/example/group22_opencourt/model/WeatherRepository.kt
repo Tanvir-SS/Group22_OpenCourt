@@ -4,6 +4,7 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
+// class to represent current weather data
 data class CurrentWeather(
     val tempC: Double,
     val weatherCode: Int,
@@ -12,7 +13,9 @@ data class CurrentWeather(
 )
 
 object WeatherRepository {
+    // fetch current weather data from open-meteo.com API
     suspend fun fetchCurrent(lat: Double, lon: Double): CurrentWeather {
+        // build URL for API request
         val url = URL(
             "https://api.open-meteo.com/v1/forecast" +
                     "?latitude=$lat&longitude=$lon" +
@@ -21,21 +24,24 @@ object WeatherRepository {
                     "&timezone=auto"
         )
 
+        // open connection and set timeouts
         val conn = (url.openConnection() as HttpURLConnection).apply {
             requestMethod = "GET"
             connectTimeout = 10_000
             readTimeout = 10_000
         }
 
+        // read response body
         val body = conn.inputStream.bufferedReader().use { it.readText() }
         val json = JSONObject(body)
         val current = json.getJSONObject("current")
 
+        // parse relevant fields
         val temp = current.getDouble("temperature_2m")
         val code = current.getInt("weather_code")
         val wind = current.getDouble("wind_speed_10m")
 
-
+        // return CurrentWeather object
         return CurrentWeather(
             tempC = temp,
             weatherCode = code,

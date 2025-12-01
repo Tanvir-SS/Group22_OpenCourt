@@ -3,6 +3,7 @@ package com.example.group22_opencourt.model
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.GeoPoint
 
+// status of a court at a specific time
 data class CourtBase(
     var id: String = "",
     var city: String = "",
@@ -27,12 +28,14 @@ sealed interface Court {
     var type: String
 }
 
+// Tennis court data class
 data class TennisCourt(
     override var base: CourtBase = CourtBase(),
     override var type: String = "tennis",
     var practiceWall: Boolean? = null
 ) : Court
 
+// Basketball court data class
 data class BasketballCourt(
     override var base: CourtBase = CourtBase(),
     override var type: String = "basketball",

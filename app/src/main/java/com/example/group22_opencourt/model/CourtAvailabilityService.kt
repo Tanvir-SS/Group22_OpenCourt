@@ -21,7 +21,7 @@ import kotlin.text.compareTo
 
 class CourtAvailabilityService : Service() {
 
-
+    // LiveData observing court document
     private var courtLiveData : FirestoreDocumentLiveData<Court?>? = null
     private val observer = Observer<Court?> { court ->
         if (court != null) {
@@ -47,24 +47,27 @@ class CourtAvailabilityService : Service() {
             return START_NOT_STICKY
         }
 
+        // start the service in the foreground
         startForeground(FOREGROUND_ID, buildForegroundNotification(courtName))
 
-
+        // start listening to court availability
         startListening(collection, docId, courtName)
         return START_STICKY
     }
 
     private fun startListening(collection: String, docId: String, courtName: String) {
+        // observe the court document for changes
         courtLiveData?.removeObserver(observer)
-
         courtLiveData = CourtRepository.instance.getCourtLiveData(docId)
         courtLiveData?.observeForever(observer)
 
     }
 
     private fun sendAvailableNotification(courtName: String, courtId : String) {
+        // send a notification that the court is available
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+        // intent to open the app when the notification is tapped
         val openIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(EXTRA_DOCUMENT_ID, courtId)
@@ -83,19 +86,22 @@ class CourtAvailabilityService : Service() {
             flags
         )
 
+        // build and send the notification
         val notif = NotificationCompat.Builder(this, CHANNEL_ALERTS)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Court available 🎉")
-            .setContentText("$courtName has availability now.")
+            .setContentTitle("Court Available! 🎉")
+            .setContentText("$courtName is Available Now.")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(openPendingIntent)
             .setAutoCancel(false)
             .build()
 
+        // notify the user
         nm.notify(ALERT_ID, notif)
     }
 
     private fun buildForegroundNotification(courtName: String): Notification {
+        // build the foreground notification with a stop action
         val stopIntent = Intent(this, CourtAvailabilityService::class.java).apply {
             action = ACTION_STOP
         }
@@ -106,8 +112,10 @@ class CourtAvailabilityService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT
         }
 
+        // create pending intent for stop action
         val stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, flags)
 
+        // create the notification
         return NotificationCompat.Builder(this, CHANNEL_FOREGROUND)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("Watching court availability")
@@ -119,10 +127,12 @@ class CourtAvailabilityService : Service() {
                 "Stop",
                 stopPendingIntent
             )
+            // build the notification
             .build()
     }
 
     private fun ensureChannels() {
+        // create notification channels if on Android O or higher
         if (Build.VERSION.SDK_INT < 26) return
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -143,6 +153,7 @@ class CourtAvailabilityService : Service() {
     }
 
     private fun cleanupAndStop() {
+        // clean up observers and stop the service
         courtLiveData?.removeObserver(observer)
         courtLiveData = null
         stopForeground(STOP_FOREGROUND_REMOVE)
@@ -150,6 +161,7 @@ class CourtAvailabilityService : Service() {
     }
 
     override fun onDestroy() {
+        // clean up observers
         courtLiveData?.removeObserver(observer)
         courtLiveData = null
         super.onDestroy()
@@ -158,15 +170,16 @@ class CourtAvailabilityService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
+        // extras for intent
         const val EXTRA_DOCUMENT_ID = "extra_document_id"
         const val EXTRA_COLLECTION = "extra_collection"
         const val EXTRA_COURT_NAME = "extra_court_name"
-
+        // notification channel and IDs
         private const val CHANNEL_FOREGROUND = "court_foreground"
         private const val CHANNEL_ALERTS = "court_alerts"
         private const val FOREGROUND_ID = 1001
         private const val ALERT_ID = 2001
-
+        // action to stop the service
         private const val ACTION_STOP = "com.example.group22_opencourt.STOP_MONITORING"
 
     }

@@ -29,31 +29,34 @@ import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
 
+    // View binding
     private lateinit var binding: ActivityLoginBinding
-
     private lateinit var auth: FirebaseAuth
-
     private lateinit var credentialManager: CredentialManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // set up view binding
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
         auth = Firebase.auth
         credentialManager = CredentialManager.create(baseContext)
 
+        // Ensure user is logged out
         auth.signOut()
 
         // Default to login screen visible
         showLoginForm()
 
+        // login button listener
         binding.buttonLogin.setOnClickListener {
             val email = binding.editTextEmail.text.toString()
             val password = binding.editTextPassword.text.toString()
             loginWithEmail(email, password)
         }
 
+        // Google Sign-In button listener
         binding.buttonLoginGmail.setOnClickListener {
             launchCredentialManager()
         }
@@ -78,6 +81,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun showLoginForm() {
+        // make login form visible with transition
         val transition = AutoTransition()
         transition.duration = 250
         TransitionManager.beginDelayedTransition(binding.root, transition)
@@ -86,6 +90,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun showSignupForm() {
+        // make signup form visible with transition
         val transition = AutoTransition()
         transition.duration = 250
         TransitionManager.beginDelayedTransition(binding.root, transition)
@@ -94,11 +99,13 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun loginWithEmail(email: String, password: String) {
+        // login with email and password
         if (email.isEmpty() || password.isEmpty()) {
             Toast.makeText(this, "Enter Email and Password", Toast.LENGTH_SHORT).show()
             return
         }
 
+        // authenticate with Firebase
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
@@ -111,6 +118,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun signupWithEmail(email: String, password: String, confirmPassword: String) {
+        // signup with email and password
         if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
             Toast.makeText(this, "Fill in All Fields", Toast.LENGTH_SHORT).show()
             return
@@ -126,6 +134,7 @@ class LoginActivity : AppCompatActivity() {
             return
         }
 
+        // create user with Firebase
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
@@ -137,6 +146,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun navigateToMain () {
+        // navigate to MainActivity
         val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
         finish()
@@ -201,39 +211,4 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
     }
-
-    //with email authenication
-    //        auth.createUserWithEmailAndPassword(email, password)
-    //            .addOnCompleteListener(this) { task ->
-    //                if (task.isSuccessful) {
-    //                    // Optionally log in automatically and navigate
-    //                    val user = auth.currentUser
-    //                    user?.sendEmailVerification()
-    //                        ?.addOnCompleteListener { task ->
-    //                            if (task.isSuccessful) {
-    //                                Toast.makeText(this, "Verification email sent", Toast.LENGTH_SHORT).show()
-    //                                showLoginForm()
-    //                            } else {
-    //                                Toast.makeText(this, "Failed to send verification email", Toast.LENGTH_SHORT).show()
-    //                            }
-    //                        }
-    //                } else {
-    //                    Toast.makeText(this, "Sign up failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
-    //                }
-    //            }
-
-    //        auth.signInWithEmailAndPassword(email, password)
-    //            .addOnCompleteListener(this) { task ->
-    //                if (task.isSuccessful) {
-    //                    val user = auth.currentUser
-    //                    if (user != null && user.isEmailVerified) {
-    //                        navigateToMain() // Email verified → allow access
-    //                    } else {
-    //                        Toast.makeText(this, "Please verify your email", Toast.LENGTH_SHORT).show()
-    //                        auth.signOut() // optional: prevent unverified login
-    //                    }
-    //                } else {
-    //                    Toast.makeText(this, "Login failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
-    //                }
-    //            }
 }

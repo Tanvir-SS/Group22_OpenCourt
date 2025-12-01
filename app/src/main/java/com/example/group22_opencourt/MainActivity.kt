@@ -36,6 +36,7 @@ import org.w3c.dom.Text
 
 class MainActivity : AppCompatActivity(), LocationListener {
 
+    // View binding
     private lateinit var binding: ActivityMainBinding
     private val PERMISSION_REQUEST_CODE = 0
     private lateinit var locationManager: LocationManager
@@ -45,8 +46,10 @@ class MainActivity : AppCompatActivity(), LocationListener {
     // LiveData to expose location updates
     val currentLocationLiveData = MutableLiveData<Location>()
 
+    // location perms launcher
     private val locationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            // Check if either fine or coarse location permission is granted
             val fineGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
             val coarseGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
 
@@ -57,10 +60,13 @@ class MainActivity : AppCompatActivity(), LocationListener {
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // inflate view
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         enableEdgeToEdge()
+
+        // get firebase user
         val user = FirebaseAuth.getInstance().currentUser
         if (user == null) {
             val loginIntent : Intent = Intent(this, LoginActivity::class.java)
@@ -71,10 +77,11 @@ class MainActivity : AppCompatActivity(), LocationListener {
             UserRepository.instance.listenCurrentUser()
             CourtRepository.instance.listenCourtsByCity("")
         }
-        //        // Set up NavController from NavHostFragment
+
+        // Set up NavController from NavHostFragment
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         navController = navHostFragment.navController
-//
+
         // Set up bottom navigation with NavController
         binding.bottomNav.setupWithNavController(navController)
 
@@ -83,14 +90,17 @@ class MainActivity : AppCompatActivity(), LocationListener {
             hideToolBarButton()
         }
 
+        // Handle intent extras for navigation
         val docId : String = intent.getStringExtra(CourtAvailabilityService.EXTRA_DOCUMENT_ID) ?: ""
         if (docId.isNotEmpty()) {
+            // Navigate to CourtDetailFragment with the provided document ID
             val args = Bundle().apply {
                 putString("document_id", docId)
             }
             navController.navigate(R.id.action_homeFragment_to_courtDetailFragment, args)
         }
 
+        // Bottom navigation item selection handling
         binding.bottomNav.setOnItemSelectedListener { item ->
             val currentDestId = navController.currentDestination?.id
 
@@ -99,6 +109,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
                 return@setOnItemSelectedListener true
             }
             hideBackButton()
+            // switch to the selected tab
             when (item.itemId) {
                 R.id.homeFragment -> {
                     // Always go back to the base firstFragment, clearing anything above it
@@ -207,7 +218,9 @@ class MainActivity : AppCompatActivity(), LocationListener {
         }
     }
 
+    // show the back button in the toolbar
     fun showBackButton() {
+        // set the back arrow icon
         binding.toolbar.navigationIcon = ContextCompat.getDrawable(this, R.drawable.ic_arrow_back)
         binding.toolbar.setNavigationOnClickListener {
             navController.navigateUp()
@@ -218,10 +231,12 @@ class MainActivity : AppCompatActivity(), LocationListener {
     }
 
     fun hideBackButton() {
+        // remove the back arrow icon
         binding.toolbar.navigationIcon = null
     }
 
     fun showToolBarButton(text : String, onClick : () -> Unit) {
+        // show the toolbar button with given text and onClick action
         binding.toolbarButton.visibility = VISIBLE
         binding.toolbarButton.text = text
         binding.toolbarButton.setOnClickListener {
@@ -230,6 +245,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
     }
 
     fun hideToolBarButton() {
+        // hide the toolbar button
         binding.toolbarButton.visibility = GONE
     }
 }

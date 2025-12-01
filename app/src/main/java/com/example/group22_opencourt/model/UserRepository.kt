@@ -15,7 +15,7 @@ import com.google.firebase.firestore.firestore
  * Mirrors the structure and behavior of [CourtRepository].
  */
 class UserRepository private constructor() {
-
+    // Firebase Auth instance
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val db = Firebase.firestore
     private val usersCollection = db.collection("users")
@@ -24,6 +24,7 @@ class UserRepository private constructor() {
     private val _currentUser = MutableLiveData<User?>()
     val currentUser: LiveData<User?> = _currentUser
 
+    // Listener registration for Firestore updates
     private var listenerRegistration: ListenerRegistration? = null
 
     /** Start listening to the currently logged-in user's document (by FirebaseAuth UID). */
@@ -32,12 +33,14 @@ class UserRepository private constructor() {
         listenerRegistration?.remove()
         listenerRegistration = null
 
+        // Get current user's UID
         val uid = auth.currentUser?.uid
         if (uid == null) {
             _currentUser.postValue(null)
             return
         }
 
+        // Start listening to the user's document
         listenerRegistration = usersCollection
             .document(uid)
             .addSnapshotListener { snapshot, error ->
@@ -75,6 +78,7 @@ class UserRepository private constructor() {
             return
         }
 
+        // Set the user document with merge option
         usersCollection.document(user.id)
             .set(user, SetOptions.merge())
             .addOnSuccessListener { onComplete?.invoke(true) }
@@ -92,6 +96,7 @@ class UserRepository private constructor() {
     }
 
     companion object {
+        // current instance of the repository
         val instance: UserRepository by lazy { UserRepository() }
     }
 }

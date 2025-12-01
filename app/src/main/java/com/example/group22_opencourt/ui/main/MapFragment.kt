@@ -69,6 +69,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
     private var selectedDistanceKm = 5 // Default distance
     private val distanceIntervals = listOf(1, 2, 5, 10, 25)
 
+    // current user data
     private var currentUser : User? = null
 
     // binding setup
@@ -80,8 +81,9 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
         return binding.root
     }
 
-    // map setup
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        // initialize map fragment
         if (mapFragment == null) {
             mapFragment = childFragmentManager.findFragmentById(R.id.map_container) as? SupportMapFragment
             if (mapFragment == null) {
@@ -92,11 +94,14 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
             }
             mapFragment!!.getMapAsync(this)
         }
+
+        // Initialize Places API
         if (!Places.isInitialized()) {
             Places.initializeWithNewPlacesApiEnabled(requireContext(), BuildConfig.MAPS_API_KEY)
         }
         placesClient= Places.createClient(requireContext())
 
+        // Observe current user data
         UserRepository.instance.currentUser.observe(viewLifecycleOwner) {
             currentUser = it
         }
@@ -116,12 +121,14 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
             )
             popupWindow.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
             popupWindow.isOutsideTouchable = true
+
             // Set initial checkbox states
             val tennisCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(
                 R.id.map_checkbox_tennis)
             val basketballCheck = popupView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.map_checkbox_basketball)
             tennisCheck.isChecked = showTennis
             basketballCheck.isChecked = showBasketball
+
             // Checkbox listeners
             tennisCheck.setOnCheckedChangeListener { _, isChecked ->
                 showTennis = isChecked
@@ -131,10 +138,10 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
                 showBasketball = isChecked
                 observeCourts()
             }
+
             //  Distance slider logic
             val distanceSlider = popupView.findViewById<com.google.android.material.slider.Slider>(R.id.map_distance_slider)
             val distanceValue = popupView.findViewById<android.widget.TextView>(R.id.map_distance_value)
-            // Set initial slider position
             val initialIndex = distanceIntervals.indexOf(selectedDistanceKm)
             distanceSlider.value = if (initialIndex >= 0) initialIndex.toFloat() else 0f
             distanceValue.text = "${distanceIntervals[distanceSlider.value.toInt()]} km"
@@ -303,6 +310,8 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
                 )
             }
+
+            // get current user favourites
             val favourites = currentUser?.favourites
             Log.d("MapFragment", "Current user favourites: $favourites")
 
@@ -315,26 +324,29 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
                     }
                     val distanceMeters = referenceLocation.distanceTo(courtLocation)
 
-                    // Apply filters: court type and distance
+                    // filter based on type and distance
                     if (((court is TennisCourt && showTennis) || (court is BasketballCourt && showBasketball)) &&
                         distanceMeters <= selectedDistanceKm * 1000) {
 
+                        // check if court is in favourites
                         val isFavourite = favourites?.contains(court.base.id)
                         Log.d("MapFragment", "Court ID: ${court.base.id}, Is Favourite: $isFavourite")
 
+                        // set marker to green if favourite, red otherwise
                         val markerColor = if (isFavourite == true) {
                             BitmapDescriptorFactory.HUE_GREEN
                         } else {
                             BitmapDescriptorFactory.HUE_RED
                         }
 
+                        // add marker to map
                         val marker = map.addMarker(
                             MarkerOptions()
                                 .position(LatLng(geoPoint.latitude, geoPoint.longitude))
                                 .title(court.base.name)
                                 .icon(BitmapDescriptorFactory.defaultMarker(markerColor))
                         )
-                        marker?.tag = court
+                        marker?.tag = court // attach court data to marker
                     }
                 } else {
                     Log.w("MapFragment", "Court ${court.base.name} does not have a valid GeoPoint")
@@ -349,6 +361,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
         map = googleMap
         map.setOnMyLocationButtonClickListener(this)
 
+        // enable UI settings
         map.uiSettings.isZoomControlsEnabled = true
         map.uiSettings.isCompassEnabled = true
         map.isMyLocationEnabled = true
@@ -419,6 +432,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
                 }
             }
         }
+        // set up map type spinner and search bar and observe courts
         setupMapTypeSpinner()
         setupSearchBar()
         observeCourts()
@@ -430,6 +444,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
         searchMarker?.remove()
         map.clear()
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            // get user location and center map
             val location = getUserLocation()
             withContext(Dispatchers.Main) {
                 currentReferenceLocation = location
@@ -467,6 +482,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
     }
 
     private fun onCourtSelected(documentId: String) {
+        // navigate to court detail fragment with court ID
         val args = Bundle().apply {
             putString("document_id", documentId)
         }
@@ -488,7 +504,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnMyLocationButton
             searchMarker = map.addMarker(
                 MarkerOptions()
                     .position(latLng)
-                    .title("Pinned location")
+                    .title("Selected Location")
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
             )
 

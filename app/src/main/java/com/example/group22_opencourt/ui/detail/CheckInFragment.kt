@@ -24,11 +24,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class CheckInFragment : Fragment() {
-
+    // initialize ViewModel and other variables
     private lateinit var viewModel: CourtDetailViewModel
     private var documentId: String = ""
     private lateinit var adapter: CourtStatusAdapter
-
     private lateinit var lastVerifiedView : TextView
 
     override fun onCreateView(
@@ -36,6 +35,7 @@ class CheckInFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_check_in, container, false)
         // Get document ID from arguments
         documentId = arguments?.getString("document_id") ?: "1EYahQs7n7ZUF6qPPAjT"
@@ -46,12 +46,15 @@ class CheckInFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        // setup RecyclerView and observe LiveData
         val recyclerView = view.findViewById<RecyclerView>(R.id.courts_recycler_view)
         viewModel.courtLiveData.observe(viewLifecycleOwner) { court ->
             val checkInOutButton = view.findViewById<View>(R.id.check_in_apply)
 
+            // set onClickListener with location check
             checkInOutButton.setOnClickListener {
                 court?.let {
+                    // check user location before allowing check-in/out
                     val userLocation = (activity as? MainActivity)?.currentLocation
                     if (userLocation != null) {
                         val courtLocation = Location("").apply {
@@ -60,6 +63,7 @@ class CheckInFragment : Fragment() {
                         }
                         val distance = userLocation.distanceTo(courtLocation)
 
+                        // only allow check-in/out within 200 meters
                         if (distance > 200) {
                             Toast.makeText(requireContext(), "Must be Within 200m to Check In or Out.", Toast.LENGTH_SHORT).show()
                             return@setOnClickListener
@@ -95,45 +99,54 @@ class CheckInFragment : Fragment() {
                 }
             }
 
+            // Populate court details in the UI
             if (court != null) {
                 Log.d("debug", court.toString())
-                // Title: "{name} ({number of courts})"
+                // set title
                 val titleView = view.findViewById<android.widget.TextView>(R.id.check_in_court_title)
                 var titleString = ""
+
                 // Set iconType based on court type
                 val iconType = when (court) {
                     is TennisCourt -> R.drawable.ic_tennis_ball
                     is BasketballCourt -> R.drawable.ic_basketball_ball
                     else -> R.drawable.ic_launcher_foreground
                 }
+
+                // Set court icon and title text
                 val iconView = view.findViewById<ImageView>(R.id.courtcheckin_type_icon)
                 iconView.setImageResource(iconType)
                 titleString += "${court.base.name} (${court.base.totalCourts})"
                 titleView.text = titleString
+
                 // Address
                 val addressView = view.findViewById<android.widget.TextView>(R.id.check_in_court_address)
                 addressView.text = court.base.address
-                // Last Verified (if you want to show it)
+
+                // Last Verified
                 lastVerifiedView = view.findViewById<android.widget.TextView>(R.id.check_in_last_verified)
                 setLastVerified(court)
 
+                // Update RecyclerView with court status
                 recyclerView.post {
                     adapter.setItems(court.base.courtStatus)
                 }
             }
         }
 
+        // Show back button in MainActivity
         val activity = requireActivity()
         if (activity is MainActivity) {
             activity.showBackButton()
         }
 
-
+        // Initialize RecyclerView
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         adapter = CourtStatusAdapter(emptyList(), lifecycleScope, true)
         recyclerView.adapter = adapter
     }
 
+    // set the last verified time text
     private fun setLastVerified(court: Court) {
         val diffMillis = System.currentTimeMillis() - court.base.lastUpdate
         if (diffMillis < 0) {

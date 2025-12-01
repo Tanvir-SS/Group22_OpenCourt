@@ -22,18 +22,17 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 
 class SettingsFragment : Fragment() {
+
+    // set up views
     private lateinit var emailEditText: EditText
-
     private lateinit var changeEmailText : TextView
-
     private lateinit var signOutButton : Button
-
     private lateinit var changeEmailLayout : LinearLayout
-
     private lateinit var layoutSettingsEmail : LinearLayout
-
     private lateinit var cancelButton : Button
     private lateinit var saveButton : Button
+
+
     private fun showKeyboard(editText: android.widget.EditText) {
         editText.requestFocus()
         val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -41,6 +40,7 @@ class SettingsFragment : Fragment() {
     }
 
     private fun initViews(view: View) {
+        // initialize all views
         changeEmailText = view.findViewById(R.id.textChangeEmail)
         emailEditText = view.findViewById(R.id.editTextEmail)
         signOutButton = view.findViewById(R.id.buttonSignOut)
@@ -50,7 +50,6 @@ class SettingsFragment : Fragment() {
         layoutSettingsEmail = view.findViewById<LinearLayout>(R.id.layoutSettingsEmail)
         cancelButton = view.findViewById(R.id.cancelButton)
         saveButton = view.findViewById(R.id.saveButton)
-
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,15 +65,21 @@ class SettingsFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        // Initialize views and set up listeners
         super.onViewCreated(view, savedInstanceState)
         initViews(view)
         showSignOut()
+
+        // sign out button listener
         signOutButton.setOnClickListener {
+            // open login activity and finish current activity
             val intent = Intent(requireContext(), LoginActivity::class.java)
             startActivity(intent)
             Toast.makeText(requireContext(), "Signed Out", Toast.LENGTH_SHORT).show()
             requireActivity().finish()
         }
+
+        // change email text listener
         changeEmailText.setOnClickListener {
             val user = FirebaseAuth.getInstance().currentUser
             if (user != null) {
@@ -97,10 +102,15 @@ class SettingsFragment : Fragment() {
                 }
             }
         }
+
+        // cancel button listener
         cancelButton.setOnClickListener {
             showSignOut()
         }
+
+        // save button listener
         saveButton.setOnClickListener {
+            // send verification email to new email address
             val user = FirebaseAuth.getInstance().currentUser
             user?.verifyBeforeUpdateEmail(emailEditText.text.toString())?.addOnCompleteListener { task ->
                 if (task.isSuccessful) {
@@ -114,6 +124,7 @@ class SettingsFragment : Fragment() {
     }
 
     private fun showSignOut() {
+        // sign out view setup
         val user = FirebaseAuth.getInstance().currentUser
         if (user != null) {
             emailEditText.setText(user.email)
@@ -131,6 +142,7 @@ class SettingsFragment : Fragment() {
     }
 
     private fun showChangeEmail() {
+        // change email view setup
         emailEditText.setText("")
         emailEditText.isFocusable = true
         emailEditText.isClickable = true

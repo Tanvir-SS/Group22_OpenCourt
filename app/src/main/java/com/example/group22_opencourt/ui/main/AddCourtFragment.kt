@@ -35,6 +35,7 @@ import java.io.File
 import kotlin.text.clear
 
 class AddCourtFragment : Fragment() {
+    // initialize views
     private lateinit var courtNameEditText: android.widget.EditText
     private lateinit var clearCourtName: ImageView
     private lateinit var courtTypeSpinner: Spinner
@@ -43,18 +44,20 @@ class AddCourtFragment : Fragment() {
     private lateinit var numCourtsEditText: android.widget.EditText
     private lateinit var clearNumCourts: ImageView
 
+    // initialize checkboxes
     private lateinit var checkboxLights: CheckBox
     private lateinit var checkboxIndoor: CheckBox
     private lateinit var checkboxWashroom: CheckBox
     private lateinit var checkboxAccessibility: CheckBox
 
+    // initialize tennis/basketball specific views
     private lateinit var layoutTennisAmenities: LinearLayout
     private lateinit var layoutBasketballAmenities: LinearLayout
     private lateinit var checkboxPracticeWall: CheckBox
     private lateinit var checkboxNets: CheckBox
 
+    // Remove photo button
     private lateinit var buttonRemovePhoto : Button
-
     private var allowAdd = true
 
     // Photo UI
@@ -69,25 +72,30 @@ class AddCourtFragment : Fragment() {
     private lateinit var pickMediaLauncher: ActivityResultLauncher<PickVisualMediaRequest>
     private lateinit var requestCameraPermissionLauncher: ActivityResultLauncher<String>
 
+    // URI to upload to Firestore
     private var uriToFireStore : Uri? = null
 
     private fun showKeyboard(editText: android.widget.EditText) {
+        // Focus the EditText and show the keyboard
         editText.requestFocus()
         val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT)
     }
 
     private fun initActivityResultLaunchers() {
+        // Camera permission request launcher
         requestCameraPermissionLauncher = registerForActivityResult(
             ActivityResultContracts.RequestPermission()
         ) { granted ->
             if (granted) {
+                // launch camera if permission granted
                 launchCamera()
             } else {
                 Toast.makeText(requireContext(), "Camera permission denied", Toast.LENGTH_SHORT).show()
             }
         }
 
+        // register camera launcher for taking picture
         takePictureLauncher = registerForActivityResult(
             ActivityResultContracts.TakePicture()
         ) { success ->
@@ -99,6 +107,7 @@ class AddCourtFragment : Fragment() {
             }
         }
 
+        // register gallery picker launcher for taking image from photo gallery
         pickMediaLauncher = registerForActivityResult(
             ActivityResultContracts.PickVisualMedia()
         ) { uri ->
@@ -110,6 +119,7 @@ class AddCourtFragment : Fragment() {
     }
 
     private fun showPhotoSourceChooser() {
+        // show dialog to choose between camera and gallery
         val options = arrayOf("Take photo", "Use gallery")
         android.app.AlertDialog.Builder(requireContext())
             .setTitle("Add photo")
@@ -123,11 +133,11 @@ class AddCourtFragment : Fragment() {
     }
 
     private fun startCameraFlow() {
+        // launch camera if permission granted
         val hasPermission = ContextCompat.checkSelfPermission(
             requireContext(),
             Manifest.permission.CAMERA
         ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-
         if (hasPermission) {
             launchCamera()
         } else {
@@ -136,12 +146,14 @@ class AddCourtFragment : Fragment() {
     }
 
     private fun launchGalleryPicker() {
+        // launch gallery picker for images
         pickMediaLauncher.launch(
             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
         )
     }
 
     private fun launchCamera() {
+        // Prepare file and URI for camera output
         val ctx = requireContext()
         val photoFile = File(
             ctx.getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES),
@@ -152,11 +164,12 @@ class AddCourtFragment : Fragment() {
 
         // Store prepared URI in ViewModel
         viewModel.onCameraPhotoPrepared(uri)
-
+        // Launch camera to take picture
         takePictureLauncher.launch(uri)
     }
 
     private fun initViews(view: View) {
+        // initialize all views
         courtNameEditText = view.findViewById(R.id.editTextCourtName)
         clearCourtName = view.findViewById(R.id.clearCourtName)
         courtTypeSpinner = view.findViewById(R.id.spinnerCourtType)
@@ -190,6 +203,7 @@ class AddCourtFragment : Fragment() {
             courtTypeSpinner.adapter = adapter
         }
 
+        // Spinner selection listener to toggle tennis/basketball specific sections
         courtTypeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
                 when (position) {
@@ -213,10 +227,12 @@ class AddCourtFragment : Fragment() {
             }
         }
 
+        // show photo source chooser on button click
         addPhotoButton.setOnClickListener {
             showPhotoSourceChooser()
         }
 
+        // clear photo on remove button click
         buttonRemovePhoto.setOnClickListener {
             viewModel.clearImage()
         }
@@ -249,7 +265,7 @@ class AddCourtFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initViews(view)
-
+        // Clear text fields on clear icon click
         clearCourtName.setOnClickListener { courtNameEditText.text.clear() }
         clearAddress.setOnClickListener { addressEditText.text.clear() }
         clearNumCourts.setOnClickListener { numCourtsEditText.text.clear() }
@@ -258,18 +274,19 @@ class AddCourtFragment : Fragment() {
         viewModel.selectedImageUri.observe(viewLifecycleOwner) { uri ->
              courtPhotoImageView.setImageDrawable(null)
             uriToFireStore = uri
-             if (uri != null) {
+            // Update UI based on whether an image is selected
+            if (uri != null) {
                  courtPhotoImageView.visibility = View.VISIBLE
                  courtPhotoImageView.setImageURI(uri)
                  addPhotoButton.text = "Update Photo"
                  buttonRemovePhoto.visibility = View.VISIBLE
 
 
-             } else {
+            } else {
                  courtPhotoImageView.visibility = View.GONE
                  addPhotoButton.text = "Add Photo"
                  buttonRemovePhoto.visibility = View.GONE
-             }
+            }
         }
 
         // Apply button: construct proper Court object (Tennis or Basketball)
@@ -278,15 +295,16 @@ class AddCourtFragment : Fragment() {
                 return@setOnClickListener
             }
             allowAdd = false
+            // get the values from the form
             val name = courtNameEditText.text.toString().trim()
             val address = addressEditText.text.toString().trim()
             val totalCourts = numCourtsEditText.text.toString().toIntOrNull() ?: 1
-
+            // get checkbox values
             val washroom = checkboxWashroom.isChecked
             val lights = checkboxLights.isChecked
             val accessibility = checkboxAccessibility.isChecked
             val indoor = !checkboxIndoor.isChecked // map from outdoor checkbox
-
+            // create CourtBase object
             val base = CourtBase(
                 name = name,
                 address = address,
@@ -299,8 +317,10 @@ class AddCourtFragment : Fragment() {
                 lastUpdate = System.currentTimeMillis(),
                 courtStatus = ArrayList(List(totalCourts) { CourtStatus() })
             )
+
             val repository = CourtRepository.instance
             lifecycleScope.launch {
+                // get court details from address
                 val result = ImagesRepository.instance.getCourtDetailsFromAddress(requireContext().applicationContext, name + " " + address)
                 if (result != null) {
                     val uri = uriToFireStore
@@ -317,6 +337,7 @@ class AddCourtFragment : Fragment() {
                     base.geoPoint = geoPoint
                     when (courtTypeSpinner.selectedItemPosition) {
                         0 -> {
+                            // store courtBase of tennis type in database
                             val court = TennisCourt(base = base, practiceWall = checkboxPracticeWall.isChecked)
                             repository.addCourt(court) {
                                 if (it) {
@@ -329,6 +350,7 @@ class AddCourtFragment : Fragment() {
                             }
                         }
                         1 -> {
+                            // store courtBase of basketball type in database
                             val court = BasketballCourt(base = base, nets = checkboxNets.isChecked)
                             repository.addCourt(court) {
                                 if (it) {

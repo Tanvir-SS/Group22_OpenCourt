@@ -19,34 +19,40 @@ import java.net.URLEncoder
 
 class CourtRepository private constructor() {
 
+    // Firestore setup
     private val db = Firebase.firestore
     private val courtsCollection = db.collection("courts2")
 
+    // LiveData for the list of courts
     private val _courts = MutableLiveData<List<Court>>()
     val courts: LiveData<List<Court>> = _courts
 
+    // Listener registration for Firestore updates
     private var listenerRegistration: ListenerRegistration? = null
 
     /** Start listening for courts in a city */
     fun listenCourtsByCity(city: String) {
+        // Remove any existing listener
         listenerRegistration?.remove()
         _courts.postValue(emptyList())
         listenerRegistration = courtsCollection
-//            .whereEqualTo("city", city)
             .addSnapshotListener { snapshot, error ->
                 if (error != null || snapshot == null) return@addSnapshotListener
-
+                // Get current list or initialize
                 val currentCourts = _courts.value?.toMutableList() ?: mutableListOf()
 
                 for (change in snapshot.documentChanges) {
+                    // Parse document based on type
                     val doc = change.document
                     val type = doc.getString("type") ?: ""
+                    // get appropriate court object
                     val court: Court = when (type) {
                         "tennis" -> doc.toObject(TennisCourt::class.java).apply { base.id = doc.id }
                         "basketball" -> doc.toObject(BasketballCourt::class.java).apply { base.id = doc.id }
                         else -> doc.toObject(TennisCourt::class.java).apply { base.id = doc.id } // fallback
                     }
 
+                    // Handle the change type
                     when (change.type) {
                         DocumentChange.Type.ADDED -> currentCourts.add(court)
                         DocumentChange.Type.MODIFIED -> {
@@ -60,6 +66,7 @@ class CourtRepository private constructor() {
                         }
                     }
                 }
+                // Post updated list
                 _courts.postValue(currentCourts)
             }
     }
@@ -72,6 +79,7 @@ class CourtRepository private constructor() {
 
     /** Add a new court */
     fun addCourt(court: Court, onComplete: ((Boolean) -> Unit)? = null) {
+        // Add court to Firestore
         courtsCollection.add(court)
             .addOnSuccessListener { docRef ->
                 court.base.id = docRef.id
@@ -84,6 +92,7 @@ class CourtRepository private constructor() {
 
     /** Update an existing court */
     fun updateCourt(court: Court, onComplete: ((Boolean) -> Unit)? = null) {
+        // Update court in Firestore
         if (court.base.id.isNotEmpty()) {
             courtsCollection.document(court.base.id)
                 .set(court, SetOptions.merge())
@@ -118,6 +127,7 @@ class CourtRepository private constructor() {
     }
 
     companion object {
+        // get current instance of the repository
         val instance: CourtRepository by lazy { CourtRepository() }
     }
 }
