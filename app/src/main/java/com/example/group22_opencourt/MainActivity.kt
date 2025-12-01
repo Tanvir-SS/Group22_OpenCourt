@@ -24,8 +24,10 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import androidx.lifecycle.MutableLiveData
 import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 
 import com.example.group22_opencourt.databinding.ActivityMainBinding
+import com.example.group22_opencourt.model.CourtAvailabilityService
 import com.example.group22_opencourt.model.UserRepository
 import com.google.android.libraries.places.api.Places
 import com.google.firebase.auth.FirebaseAuth
@@ -79,6 +81,14 @@ class MainActivity : AppCompatActivity(), LocationListener {
         navController.addOnDestinationChangedListener { controller, destination, arguments ->
             // This runs on every navigation event
             hideToolBarButton()
+        }
+
+        val docId : String = intent.getStringExtra(CourtAvailabilityService.EXTRA_DOCUMENT_ID) ?: ""
+        if (docId.isNotEmpty()) {
+            val args = Bundle().apply {
+                putString("document_id", docId)
+            }
+            navController.navigate(R.id.action_homeFragment_to_courtDetailFragment, args)
         }
 
         binding.bottomNav.setOnItemSelectedListener { item ->

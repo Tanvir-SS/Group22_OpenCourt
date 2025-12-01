@@ -14,6 +14,9 @@ import com.example.group22_opencourt.R
 
 import android.app.PendingIntent
 import androidx.lifecycle.Observer
+import com.example.group22_opencourt.MainActivity
+import kotlin.or
+import kotlin.text.compareTo
 
 
 class CourtAvailabilityService : Service() {
@@ -23,7 +26,7 @@ class CourtAvailabilityService : Service() {
     private val observer = Observer<Court?> { court ->
         if (court != null) {
             if (court.base.courtsAvailable > 0) {
-                sendAvailableNotification(court.base.name)
+                sendAvailableNotification(court.base.name, court.base.id)
                 cleanupAndStop()
             }
         }
@@ -59,14 +62,33 @@ class CourtAvailabilityService : Service() {
 
     }
 
-    private fun sendAvailableNotification(courtName: String) {
+    private fun sendAvailableNotification(courtName: String, courtId : String) {
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        val openIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_DOCUMENT_ID, courtId)
+        }
+
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
+        }
+
+        val openPendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            openIntent,
+            flags
+        )
 
         val notif = NotificationCompat.Builder(this, CHANNEL_ALERTS)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("Court available 🎉")
             .setContentText("$courtName has availability now.")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(openPendingIntent)
             .setAutoCancel(false)
             .build()
 
