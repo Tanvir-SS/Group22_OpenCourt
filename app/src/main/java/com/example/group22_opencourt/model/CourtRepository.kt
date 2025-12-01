@@ -1,3 +1,4 @@
+import android.util.Log
 import android.widget.ImageView
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -19,6 +20,10 @@ import java.net.URLEncoder
 
 class CourtRepository private constructor() {
 
+    init {
+        Log.d("APP_CHECK", "Repository created")
+    }
+
     // Firestore setup
     private val db = Firebase.firestore
     private val courtsCollection = db.collection("courts2")
@@ -32,11 +37,13 @@ class CourtRepository private constructor() {
 
     /** Start listening for courts in a city */
     fun listenCourtsByCity(city: String) {
-        // Remove any existing listener
+        Log.d("APP CHECK",  "started read")
+            // Remove any existing listener
         listenerRegistration?.remove()
         _courts.postValue(emptyList())
         listenerRegistration = courtsCollection
             .addSnapshotListener { snapshot, error ->
+                Log.d("FIRESTORE_TEST",  "Read failed", error)
                 if (error != null || snapshot == null) return@addSnapshotListener
                 // Get current list or initialize
                 val currentCourts = _courts.value?.toMutableList() ?: mutableListOf()
