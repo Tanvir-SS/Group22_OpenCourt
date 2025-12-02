@@ -66,7 +66,7 @@ And install it on any android device or emulator.
 
 ## Demo Video
 
-[youtube link here](https://opencourt-group22.vercel.app/)
+[Final Presentation + Demo](https://www.youtube.com/watch?v=zAXvRrGxMB4)
 
 ## Team Members
 
